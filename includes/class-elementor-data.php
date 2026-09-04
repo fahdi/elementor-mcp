@@ -614,24 +614,41 @@ class EMCP_Tools_Data {
 		return $count;
 	}
 
-	/**
-	 * Updates settings for a specific element in the tree.
-	 *
-	 * Modifies `$data` by reference. Returns true if element was found
-	 * and updated, false if the element ID was not found.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array  $data       The element tree (passed by reference).
-	 * @param string $element_id The element ID to update.
-	 * @param array  $settings   The settings to merge.
-	 * @return bool True if updated, false if not found.
-	 */
+	/** Determine which native serialization contract an element uses. */
+	public static function is_atomic_element( array $element ): bool {
+		$type = (string) ( $element['elType'] ?? '' );
+		$widget = (string) ( $element['widgetType'] ?? '' );
+		if ( in_array( $type, array( 'e-flexbox', 'e-div-block' ), true ) || in_array( $widget, array( 'e-flexbox', 'e-div-block' ), true ) ) {
+			return true;
+		}
+		if ( 'widget' === $type && EMCP_Tools_Atomic_Widget_Map::is_atomic( $widget ) ) {
+			return true;
+		}
+		if ( ! class_exists( '\Elementor\Plugin' ) ) {
+			return false;
+		}
+		$manager = 'widget' === $type ? ( \Elementor\Plugin::$instance->widgets_manager ?? null ) : ( \Elementor\Plugin::$instance->elements_manager ?? null );
+		$method = 'widget' === $type ? 'get_widget_types' : 'get_element_types';
+		$registered = $manager && method_exists( $manager, $method ) ? $manager->$method( 'widget' === $type ? $widget : $type ) : null;
+		return is_object( $registered ) && method_exists( $registered, 'get_props_schema' );
+	}
+
+	/** Merge settings into an element by ID, modifying the tree by reference. */
 	public function update_element_settings( array &$data, string $element_id, array $settings ): bool {
 		foreach ( $data as &$item ) {
 			if ( isset( $item['id'] ) && $item['id'] === $element_id ) {
 				if ( ! isset( $item['settings'] ) ) {
 					$item['settings'] = array();
+				}
+
+				// Classic Elementor serializes Navigator names as settings._title;
+				// only atomic elements retain editor_settings at the root (#133).
+				if ( ! self::is_atomic_element( $item ) && isset( $settings['editor_settings']['title'] ) ) {
+					$settings['_title'] = $settings['editor_settings']['title'];
+					unset( $settings['editor_settings']['title'] );
+					if ( empty( $settings['editor_settings'] ) ) {
+						unset( $settings['editor_settings'] );
+					}
 				}
 
 				// Sibling-root keys: on v4 atomic elements the local `styles`

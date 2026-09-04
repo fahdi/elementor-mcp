@@ -32,9 +32,15 @@ EMCP Tools is a WordPress plugin that exposes your site as **[MCP](https://model
 
 **Run the site.** Content and taxonomies, media, users, settings, plugins and themes, nav menus, the filesystem, and the database, all over MCP.
 
-**Understand and undo.** One-call page snapshots, content search across your own pages and templates, a change ledger with rollback, and read-only performance and security scans that return a scored report.
+**Understand and undo.** One-call page snapshots, public front-end HTML inspection, content search across your own pages and templates, a change ledger with rollback, and read-only performance and security scans that return a scored report.
 
 **Speak your plugins.** Integrations that register only when the plugin is active: ACF, Meta Box, WooCommerce, 8 form builders, 7 SEO plugins, and the Elementor addon packs. See the [integrations directory](https://emcptools.com/integrations/).
+
+WooCommerce's native Brands API is covered by `list-brands`, `get-brand`, `create-brand`, and `update-brand` inside the Woo read/write dispatchers. Brand writes support no-write validation with `dry_run:true`, use existing image attachment IDs for logos, and reuse the active SEO integration's term tools for SEO metadata.
+
+If generated Elementor styling is stale, enable `regenerate-css` under **Tools → Page Management**, then call it with `{ "post_id": 123 }` to invalidate one editable page's CSS/render/asset data. Site-wide invalidation uses `{ "scope": "site", "confirm": true }` and requires administrator permission; Elementor rebuilds on the next frontend request. This does not purge CDN or other plugins' caches.
+
+For classic container grids, Elementor defaults to **two rows**. Set `settings.grid_rows_grid` to `{ "unit": "fr", "size": 1 }` for a single row. Supply all four sides of margin/padding/border dimensions; mixed blank sides produce a warning because Elementor can omit the whole CSS rule. Blanks are not automatically converted to zero.
 
 Elementor is **optional**. Every WordPress domain works without it; installing Elementor unlocks the page-building family.
 

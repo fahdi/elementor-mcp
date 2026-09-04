@@ -2,6 +2,17 @@
 
 All notable changes to MCP Tools for Elementor are documented in this file.
 
+## [3.15.0]
+
+> Adds public page HTML inspection, Elementor CSS regeneration, and native WooCommerce Brands support, and improves Navigator labels and layout guidance.
+
+- New: **Agents can inspect a page's public front-end HTML** (#132). The read-only `get-page-html` tool accepts a same-origin URL or published post ID (defaulting to the front page), returns theme and SEO-plugin output in bounded UTF-8 chunks, and uses a SHA-256 continuation guard so chunks from different page versions cannot be mixed. Fetches are credential-free, size-limited, and enforce the same origin across every redirect. This is server-rendered response HTML; JavaScript is not executed.
+- New: **Agents can invalidate stale Elementor CSS and render data** (#136). `regenerate-css` ships disabled by default and clears one editable page by default; the explicit site scope requires `manage_options` and `confirm:true`. Elementor rebuilds the caches on the next frontend request.
+- New: **Native WooCommerce brand workflows are available through the existing Woo dispatchers (Pro)** (#137). List, get, create, and partial-update operations include duplicate prevention, image-attachment validation, no-write dry runs, enriched term/archive identifiers, and guidance to reuse the active SEO plugin's existing term tools. The implementation deliberately refuses unsupported third-party brand taxonomies and remote image URLs.
+- Fixed: **Navigator labels now persist on classic and atomic Elementor elements** (#133). Classic containers, sections, columns and widgets use `settings._title`; atomic elements keep root `editor_settings.title`. The dedicated label tool verifies its saved value before reporting success, while universal and batch updates use the same type-aware mapping.
+- Improved: **Partial classic dimension values no longer fail silently** (#134). Layout, widget, batch and composite build responses warn when margin, padding, radius or border width mixes specified and blank sides. Values remain unchanged so inheritance is not accidentally converted to zero.
+- Improved: **Grid's two-row default is documented at discovery and creation time** (#135). The tool describes the default and reports a creation warning when `grid_rows_grid` is omitted, including the explicit one-row shape.
+
 ## [3.14.2]
 
 ### Fixed

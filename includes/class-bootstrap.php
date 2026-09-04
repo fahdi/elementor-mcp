@@ -140,6 +140,7 @@ class EMCP_Tools_Bootstrap {
 		require_once EMCP_TOOLS_DIR . 'includes/class-schema-compat.php';
 		require_once EMCP_TOOLS_DIR . 'includes/class-id-generator.php';
 		require_once EMCP_TOOLS_DIR . 'includes/class-url-guard.php';
+		require_once EMCP_TOOLS_DIR . 'includes/class-frontend-page-fetcher.php';
 		require_once EMCP_TOOLS_DIR . 'includes/class-site-context.php';
 		require_once EMCP_TOOLS_DIR . 'includes/class-elementor-data.php';
 		require_once EMCP_TOOLS_DIR . 'includes/class-element-factory.php';

@@ -3,7 +3,7 @@ Contributors: mianshahzadraza
 Tags: elementor, mcp, ai, page-builder, automation
 Requires at least: 6.9
 Tested up to: 7.1
-Stable tag: 3.14.2
+Stable tag: 3.15.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -20,6 +20,7 @@ As of v3.0.0 the 62 per-widget tools were folded into a catalog-backed model, so
 
 * **Query & Discovery**: List widgets, inspect page structures, read element settings, browse templates, and view global design tokens.
 * **WordPress Content (beyond Elementor)**: Create and manage posts, pages, and any custom post type (content, status, taxonomy terms, custom fields, and featured images) via MCP, without touching Elementor data. Built on WP core; every post carries an `is_elementor` flag that steers agents to the Elementor tools for builder pages. (v3.0.0)
+* **Front-end Page HTML**: Fetch the public front-end HTML for a same-origin URL or published post ID with `get-page-html`. The read-only tool includes theme and SEO-plugin output, returns large documents in checksum-guarded chunks, and never forwards the connected user's credentials. It returns the server response source; JavaScript is not executed.
 * **WordPress Settings (beyond Elementor)**: Read and batch-update core WordPress settings (general/reading/writing/discussion/media/permalinks) over MCP. Curated allowlist only: no arbitrary option access; `admin_email` is read-only; permalink changes auto-flush rewrite rules. `manage_options`. (v3.0.0)
 * **Plugins & Themes (beyond Elementor)**: Discover, install (wordpress.org only), update, activate/deactivate, and delete plugins and themes over MCP. EMCP Tools and Elementor are protected; install/update/delete are disabled-by-default and per-op capability-gated. (v3.0.0)
 * **Media Library (beyond Elementor)**: Fetch full attachment detail, edit metadata (alt text, title, caption, description), and delete attachments over MCP. get/update are enabled by default; delete is disabled-by-default and requires explicit confirmation. (v3.0.0)
@@ -176,6 +177,17 @@ On shared LiteSpeed hosting (e.g. Hostinger) this is usually the host caching/bu
 2. Connection configuration page with copy-paste configs.
 
 == Changelog ==
+
+= 3.15.0 =
+
+Adds public page HTML inspection, Elementor CSS regeneration, and native WooCommerce Brands support, and improves Navigator labels and layout guidance.
+
+* Added: read-only public front-end HTML inspection with bounded chunks and same-origin redirect protection (#132). Returns server-rendered HTML; JavaScript is not executed.
+* Added: page or site-wide Elementor CSS/data regeneration (#136). Ships disabled by default; site-wide use requires administrator permission and confirmation.
+* Added: native WooCommerce brand list/get/create/update workflows (Pro), with dry runs, duplicate checks, validated logo attachments, and guidance for the active SEO plugin's term tools (#137).
+* Fixed: classic and atomic Navigator label persistence, with saved-value verification (#133).
+* Improved: layout tools warn when dimension values mix blank and specified sides, without changing the supplied values (#134).
+* Improved: grid discovery and creation explain Elementor's two-row default and the explicit single-row setting (#135).
 
 = 3.14.2 =
 Fixes intermittent MCP connection failures affecting OAuth and Application Password clients, especially on managed hosts and during concurrent startup.

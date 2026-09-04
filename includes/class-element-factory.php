@@ -18,6 +18,33 @@ if ( ! defined( 'ABSPATH' ) ) {
 class EMCP_Tools_Element_Factory {
 
 	/**
+	 * Warn about partial classic dimensions without replacing inherited values.
+	 * Elementor can drop the entire selector when one side is blank (#134).
+	 * Grid defaults are intentionally left to Elementor (#135).
+	 */
+	public static function settings_warnings( array $settings, bool $creating = false ): array {
+		$warnings = array();
+		foreach ( $settings as $key => $value ) {
+			if ( ! preg_match( '/^_?(?:margin|padding|border_radius|border_width)(?:_[a-z0-9_]+)?$/', $key ) || ! is_array( $value ) || isset( $value['$$type'] ) ) {
+				continue;
+			}
+			$blank = array();
+			foreach ( array( 'top', 'right', 'bottom', 'left' ) as $side ) {
+				if ( ! isset( $value[ $side ] ) || '' === $value[ $side ] ) {
+					$blank[] = $side;
+				}
+			}
+			if ( count( $blank ) > 0 && count( $blank ) < 4 ) {
+				$warnings[] = sprintf( '%s has blank or missing sides (%s). Elementor may omit the entire CSS rule. Supply all four sides (use 0 where intended); values were left unchanged to preserve inheritance.', $key, implode( ', ', $blank ) );
+			}
+		}
+		if ( $creating && 'grid' === ( $settings['container_type'] ?? '' ) && ! isset( $settings['grid_rows_grid'] ) ) {
+			$warnings[] = 'Elementor defaults grid_rows_grid to 2 rows. For a single-row grid, explicitly set grid_rows_grid: {"unit":"fr","size":1} inside settings.';
+		}
+		return $warnings;
+	}
+
+	/**
 	 * Creates a container element.
 	 *
 	 * @since 1.0.0

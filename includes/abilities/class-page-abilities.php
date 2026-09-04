@@ -2,8 +2,8 @@
 /**
  * Page CRUD MCP abilities for Elementor.
  *
- * Registers 5 tools for creating, updating, clearing, importing,
- * and exporting Elementor pages.
+ * Registers tools for creating, updating, clearing, importing,
+ * exporting Elementor pages and regenerating their caches.
  *
  * @package EMCP_Tools
  * @since   1.0.0
@@ -57,6 +57,7 @@ class EMCP_Tools_Page_Abilities {
 			'emcp-tools/delete-page-content',
 			'emcp-tools/import-template',
 			'emcp-tools/export-page',
+			'emcp-tools/regenerate-css',
 		);
 	}
 
@@ -71,6 +72,84 @@ class EMCP_Tools_Page_Abilities {
 		$this->register_delete_page_content();
 		$this->register_import_template();
 		$this->register_export_page();
+		$this->register_regenerate_css();
+	}
+
+	private function register_regenerate_css(): void {
+		emcp_tools_register_ability( 'emcp-tools/regenerate-css', array(
+			'label' => __( 'Regenerate CSS & Data', 'emcp-tools' ),
+			'description' => __( 'Invalidates generated Elementor CSS and render/asset caches, which rebuild on the next frontend request. Default scope=page requires post_id and permission to edit that post. Site-wide scope=site requires manage_options and confirm:true. Does not change page content or clear third-party/CDN caches.', 'emcp-tools' ),
+			'category' => 'emcp-tools',
+			'execute_callback' => array( $this, 'execute_regenerate_css' ),
+			'permission_callback' => array( $this, 'check_regenerate_permission' ),
+			'input_schema' => array(
+				'type' => 'object',
+				'properties' => array(
+					'scope' => array( 'type' => 'string', 'enum' => array( 'page', 'site' ), 'default' => 'page' ),
+					'post_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+					'confirm' => array( 'type' => 'boolean', 'default' => false ),
+				),
+			),
+			'output_schema' => array( 'type' => 'object', 'properties' => array(
+				'success' => array( 'type' => 'boolean' ),
+				'scope' => array( 'type' => 'string' ),
+				'post_id' => array( 'type' => 'integer' ),
+				'regeneration' => array( 'type' => 'string' ),
+			) ),
+			'meta' => array( 'annotations' => array( 'readonly' => false, 'destructive' => false, 'idempotent' => true ), 'show_in_rest' => true ),
+		) );
+	}
+
+	public function check_regenerate_permission( $input = null ): bool {
+		$scope = $input['scope'] ?? 'page';
+		if ( 'site' === $scope ) {
+			return current_user_can( 'manage_options' );
+		}
+		return 'page' === $scope && ! empty( $input['post_id'] ) && $this->check_edit_permission( $input );
+	}
+
+	public function execute_regenerate_css( $input ) {
+		$scope = $input['scope'] ?? 'page';
+		$post_id = $input['post_id'] ?? 0;
+		if ( ! in_array( $scope, array( 'page', 'site' ), true ) || ( 'page' === $scope && ( ! is_int( $post_id ) || $post_id < 1 ) ) || ( 'site' === $scope && isset( $input['post_id'] ) ) ) {
+			return new \WP_Error( 'invalid_scope', __( 'Use scope=page with a positive post_id, or scope=site without post_id.', 'emcp-tools' ) );
+		}
+		if ( ! $this->check_regenerate_permission( $input ) ) {
+			return new \WP_Error( 'forbidden', __( 'You cannot regenerate Elementor caches for this scope.', 'emcp-tools' ) );
+		}
+		if ( 'site' === $scope && true !== ( $input['confirm'] ?? false ) ) {
+			return new \WP_Error( 'confirmation_required', __( 'Site-wide regeneration requires confirm:true.', 'emcp-tools' ) );
+		}
+		if ( 'page' === $scope && ! get_post( $post_id ) ) {
+			return new \WP_Error( 'post_not_found', __( 'The requested post does not exist.', 'emcp-tools' ) );
+		}
+		try {
+			$result = $this->clear_elementor_cache( 'page' === $scope ? $post_id : 0 );
+		} catch ( \Throwable $error ) {
+			return new \WP_Error( 'cache_regeneration_failed', __( 'Elementor could not clear its generated caches. Check server logs and filesystem permissions.', 'emcp-tools' ) );
+		}
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		return array( 'success' => true, 'scope' => $scope, 'post_id' => 'page' === $scope ? $post_id : 0, 'regeneration' => 'on_next_frontend_request' );
+	}
+
+	/** Official Elementor cache APIs; isolated for tests without filesystem writes. */
+	protected function clear_elementor_cache( int $post_id ) {
+		if ( ! class_exists( '\Elementor\Plugin' ) || ! isset( \Elementor\Plugin::$instance->files_manager ) ) {
+			return new \WP_Error( 'elementor_unavailable', __( 'Elementor cache management is unavailable.', 'emcp-tools' ) );
+		}
+		if ( 0 === $post_id ) {
+			\Elementor\Plugin::$instance->files_manager->clear_cache();
+		} else {
+			\Elementor\Core\Files\CSS\Post::create( $post_id )->delete();
+			delete_post_meta( $post_id, \Elementor\Core\Base\Document::CACHE_META_KEY );
+			delete_post_meta( $post_id, \Elementor\Core\Base\Elements_Iteration_Actions\Assets::ASSETS_META_KEY );
+			// Atomic styles have their own versioned cache. Scope the official
+			// clear hook to this post (both frontend and preview), never global.
+			do_action( 'elementor/atomic-widgets/styles/clear', array( 'local', $post_id ) );
+		}
+		return true;
 	}
 
 	/**

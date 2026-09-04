@@ -1289,7 +1289,7 @@ class EMCP_Tools_Admin {
 	 *
 	 * @since 1.8.0
 	 */
-	const DEFAULTS_VERSION = 36;
+	const DEFAULTS_VERSION = 37;
 
 	/**
 	 * SEO/A11y Pro MCP tool slugs that ship disabled-by-default (v2 defaults).
@@ -1939,6 +1939,11 @@ class EMCP_Tools_Admin {
 			$add[] = 'emcp-tools/delete-variable';
 			$add[] = 'emcp-tools/restore-variable';
 			$add[] = 'emcp-tools/batch-variables';
+		}
+
+		// v37 — Cache regeneration can affect site-wide rendering; require opt-in.
+		if ( $applied < 37 ) {
+			$add[] = 'emcp-tools/regenerate-css';
 		}
 
 		$merged = array_values( array_unique( array_merge( $existing, $add ) ) );
@@ -4902,6 +4907,11 @@ class EMCP_Tools_Admin {
 						'description' => __( 'Returns a post\'s content, terms, meta, and featured image.', 'emcp-tools' ),
 						'badges'      => array( 'read-only' ),
 					),
+					'emcp-tools/get-page-html'   => array(
+						'label'       => __( 'Get Page HTML', 'emcp-tools' ),
+						'description' => __( 'Fetches chunked public front-end response HTML from this site. JavaScript is not executed.', 'emcp-tools' ),
+						'badges'      => array( 'read-only' ),
+					),
 					'emcp-tools/update-post'     => array(
 						'label'       => __( 'Update Post', 'emcp-tools' ),
 						'description' => __( 'Partial update of a post/page/CPT.', 'emcp-tools' ),
@@ -5158,21 +5168,21 @@ class EMCP_Tools_Admin {
 				'group'    => 'ecommerce',
 				'pro'      => true,
 				'label'    => __( 'WooCommerce', 'emcp-tools' ),
-				'note'     => __( 'WooCommerce is exposed as two tools, one Read, one Write, over the full wc/v3 API (~120 operations). The AI calls a tool with an operation name; toggle a tool to allow or block all of its operations at once. Money/irreversible operations (refunds, deletes, batch) additionally require confirm:true. Requires WooCommerce active.', 'emcp-tools' ),
+				'note'     => __( 'WooCommerce is exposed as two tools, one Read and one Write, over wc/v3. Native WooCommerce Brands add list/get/create/update operations with validated existing image attachments and no-write dry runs; unsupported third-party brand taxonomies are refused. Use the active SEO integration term tools for brand SEO. Money/irreversible operations (refunds, deletes, batch) require confirm:true. Requires WooCommerce active.', 'emcp-tools' ),
 				'tools'    => array(
 					'emcp-tools/woo-read'  => array(
 						'label'            => __( 'WooCommerce Read', 'emcp-tools' ),
-						'description'      => __( 'Read products, variations, orders, refunds, customers, coupons, reports, settings, shipping, taxes, webhooks, and system status. Call the tool with no operation to list all read operations.', 'emcp-tools' ),
+						'description'      => __( 'Read products, native brands, variations, orders, refunds, customers, coupons, reports, settings, shipping, taxes, webhooks, and system status. Call with no operation to list all read operations.', 'emcp-tools' ),
 						'badges'           => array( 'read-only' ),
-						'operations'       => array( 'list-products', 'get-order', 'list-orders', 'list-customers', 'list-coupons', 'report-sales', 'get-settings', 'list-webhooks', 'system-status', '… ~58 read operations' ),
+						'operations'       => array( 'list-products', 'list-brands', 'get-brand', 'get-order', 'list-orders', 'list-customers', 'list-coupons', 'report-sales', 'get-settings', 'list-webhooks', 'system-status', '…' ),
 						'available'        => self::woo_available(),
 						'requires'         => array( 'name' => 'WooCommerce', 'kind' => 'plugin' ),
 					),
 					'emcp-tools/woo-write' => array(
 						'label'            => __( 'WooCommerce Write', 'emcp-tools' ),
-						'description'      => __( 'Create, update, and delete products, orders, refunds, customers, coupons, settings, shipping, taxes, and webhooks. Refunds/deletes/batch require confirm:true. Call the tool with no operation to list all write operations.', 'emcp-tools' ),
+						'description'      => __( 'Create and update native brands, plus create/update/delete products, orders, refunds, customers, coupons, settings, shipping, taxes, and webhooks. Brand writes support dry_run:true. Refunds/deletes/batch require confirm:true. Call with no operation to list all write operations.', 'emcp-tools' ),
 						'badges'           => array( 'destructive' ),
-						'operations'       => array( 'create-product', 'update-order', 'create-refund', 'create-customer', 'delete-order', 'update-setting', '… ~59 write operations' ),
+						'operations'       => array( 'create-product', 'create-brand', 'update-brand', 'update-order', 'create-refund', 'create-customer', 'delete-order', 'update-setting', '…' ),
 						'available'        => self::woo_available(),
 						'requires'         => array( 'name' => 'WooCommerce', 'kind' => 'plugin' ),
 					),
@@ -5899,6 +5909,11 @@ class EMCP_Tools_Admin {
 						'label'       => __( 'Export Page', 'emcp-tools' ),
 						'description' => __( 'Exports a page\'s Elementor data as JSON.', 'emcp-tools' ),
 						'badges'      => array( 'read-only' ),
+					),
+					'emcp-tools/regenerate-css' => array(
+						'label' => __( 'Regenerate CSS & Data', 'emcp-tools' ),
+						'description' => __( 'Clears Elementor CSS and render/asset caches for one page, or site-wide with administrator permission and confirmation.', 'emcp-tools' ),
+						'badges' => array(),
 					),
 				),
 			),

@@ -165,6 +165,7 @@ class EMCP_Tools_Widget_Abilities {
 					'properties' => array(
 						'element_id'  => array( 'type' => 'string' ),
 						'widget_type' => array( 'type' => 'string' ),
+						'warnings' => array( 'type' => 'array', 'items' => array( 'type' => 'string' ) ),
 					),
 				),
 				'meta'                => array(
@@ -196,6 +197,7 @@ class EMCP_Tools_Widget_Abilities {
 					'properties' => array(
 						'element_id'  => array( 'type' => 'string' ),
 						'widget_type' => array( 'type' => 'string' ),
+						'warnings' => array( 'type' => 'array', 'items' => array( 'type' => 'string' ) ),
 					),
 				),
 				'meta'                => array(
@@ -363,6 +365,7 @@ class EMCP_Tools_Widget_Abilities {
 		return array(
 			'element_id'  => $widget['id'],
 			'widget_type' => $widget_type,
+			'warnings'    => EMCP_Tools_Element_Factory::settings_warnings( $settings ),
 		);
 	}
 
@@ -404,6 +407,7 @@ class EMCP_Tools_Widget_Abilities {
 					'properties' => array(
 						'success'    => array( 'type' => 'boolean' ),
 						'element_id' => array( 'type' => 'string' ),
+						'warnings' => array( 'type' => 'array', 'items' => array( 'type' => 'string' ) ),
 					),
 				),
 				'meta'                => array(
@@ -467,6 +471,7 @@ class EMCP_Tools_Widget_Abilities {
 		return array(
 			'success'    => true,
 			'element_id' => $element_id,
+			'warnings'   => EMCP_Tools_Element_Factory::settings_warnings( $settings ),
 		);
 	}
 
