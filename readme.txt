@@ -3,7 +3,7 @@ Contributors: mianshahzadraza
 Tags: elementor, mcp, ai, page-builder, automation
 Requires at least: 6.9
 Tested up to: 7.1
-Stable tag: 3.16.1
+Stable tag: 3.17.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -178,6 +178,17 @@ On shared LiteSpeed hosting (e.g. Hostinger) this is usually the host caching/bu
 2. Connection configuration page with copy-paste configs.
 
 == Changelog ==
+
+= 3.17.0 =
+
+Adds page and upload creation undo, records page settings and CSS, and strengthens History rollback verification.
+
+* Fixed: create-page records one creation event and returns its change_id. Undo removes the created page, including its initial Elementor content.
+* New: upload-media records a creation event and returns its change_id. Undo removes the attachment and verifies deletion of recorded WordPress-managed files, including generated sizes on Windows.
+* Fixed: Page settings and custom CSS changes record exact prior metadata for undo, preserve absence and escaped values, and invalidate Elementor caches. Identical CSS saves do not add redundant entries.
+* Improved: Conflict guards protect later creation edits, metadata, taxonomy assignments, user fields, ACF values, and changed upload bytes. Unrelated post-field changes remain intact.
+* Fixed: Failed restoration or History persistence no longer reports ordinary rollback success. Missing backups and occupied IDs are refused, and failed ledger cleanup retains its snapshots.
+* Changed: Incomplete or unverified database, legacy post, and generic attachment-deletion snapshots refuse automatic undo even with force. History explains unavailability and retains snapshots for inspection. Previously omitted actions are not reconstructed; rollback coverage remains operation-specific.
 
 = 3.16.1 =
 

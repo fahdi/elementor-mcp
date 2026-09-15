@@ -259,6 +259,7 @@ class EMCP_Tools_Page_Abilities {
 						'title'       => array( 'type' => 'string' ),
 						'edit_url'    => array( 'type' => 'string' ),
 						'preview_url' => array( 'type' => 'string' ),
+						'change_id'   => array( 'type' => 'string' ),
 					),
 				),
 				'meta'                => array(
@@ -312,16 +313,33 @@ class EMCP_Tools_Page_Abilities {
 			update_post_meta( $post_id, '_wp_page_template', sanitize_text_field( $input['template'] ) );
 		}
 
-		// Save initial content if provided.
-		if ( ! empty( $input['content'] ) && is_array( $input['content'] ) ) {
-			$save_result = $this->data->save_page_data( $post_id, $input['content'] );
-		} else {
-			// Save empty Elementor data to initialize.
-			$save_result = $this->data->save_page_data( $post_id, array() );
+		// Initialization belongs to the creation event; it is not a separate
+		// page edit whose undo would merely empty the newly created page.
+		$has_history = class_exists( 'EMCP_Tools_Change_Recorder' );
+		$was_suppressed = $has_history && EMCP_Tools_Change_Log::$suppress;
+		if ( $has_history ) {
+			EMCP_Tools_Change_Log::$suppress = true;
+		}
+		try {
+			$content = ! empty( $input['content'] ) && is_array( $input['content'] ) ? $input['content'] : array();
+			$save_result = $this->data->save_page_data( $post_id, $content );
+		} catch ( \Throwable $error ) {
+			$save_result = new \WP_Error( 'initialization_failed', $error->getMessage() );
+		} finally {
+			if ( $has_history ) {
+				EMCP_Tools_Change_Log::$suppress = $was_suppressed;
+			}
+		}
+		$change_id = $has_history ? EMCP_Tools_Change_Recorder::record_resource_create( $post_id, 'elementor', 'create-page' ) : '';
+		if ( $has_history && ! $was_suppressed && '' === $change_id ) {
+			return new \WP_Error( 'history_record_failed', __( 'The page was created, but History could not save its creation. Inspect the page before retrying.', 'emcp-tools' ), array( 'post_id' => $post_id ) );
 		}
 
 		if ( is_wp_error( $save_result ) ) {
 			return $save_result;
+		}
+		if ( true !== $save_result ) {
+			return new \WP_Error( 'initialization_failed', __( 'The page was created, but Elementor initialization failed.', 'emcp-tools' ), array( 'post_id' => $post_id, 'change_id' => $change_id ) );
 		}
 
 		$edit_url    = admin_url( 'post.php?post=' . $post_id . '&action=elementor' );
@@ -332,6 +350,7 @@ class EMCP_Tools_Page_Abilities {
 			'title'       => $title,
 			'edit_url'    => $edit_url,
 			'preview_url' => $preview_url ? $preview_url : '',
+			'change_id'   => $change_id,
 		);
 	}
 

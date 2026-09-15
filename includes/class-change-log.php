@@ -35,7 +35,7 @@ class EMCP_Tools_Change_Log {
 	public static $suppress = false;
 
 	/**
-	 * Append an entry. Returns its id, or '' when suppressed.
+	 * Append an entry. Returns its id, or '' when suppressed or persistence fails.
 	 *
 	 * @param array $entry { domain, action, target?, summary?, rollback? }.
 	 * @return string
@@ -62,7 +62,11 @@ class EMCP_Tools_Change_Log {
 		);
 		$log   = self::all();
 		$log[] = $entry;
-		update_option( self::OPTION, self::cap( $log ), false );
+		$kept = self::cap( $log );
+		if ( ! update_option( self::OPTION, $kept, false ) ) {
+			return '';
+		}
+		self::forget_blobs( array_slice( $log, 0, count( $log ) - count( $kept ) ) );
 		return $id;
 	}
 
@@ -96,15 +100,21 @@ class EMCP_Tools_Change_Log {
 	 *
 	 * @param string $id Entry id.
 	 */
-	public static function mark_rolled_back( string $id ): void {
+	public static function mark_rolled_back( string $id ): bool {
 		$log = self::all();
+		$found = false;
 		foreach ( $log as &$e ) {
 			if ( isset( $e['id'] ) && $e['id'] === $id ) {
 				$e['rolled_back'] = true;
+				$found = true;
 			}
 		}
 		unset( $e );
-		update_option( self::OPTION, $log, false );
+		if ( ! $found ) {
+			return false;
+		}
+		$updated = update_option( self::OPTION, $log, false );
+		return $updated || ! empty( self::get( $id )['rolled_back'] );
 	}
 
 	/**
@@ -135,8 +145,10 @@ class EMCP_Tools_Change_Log {
 		if ( null === $removed ) {
 			return false;
 		}
+		if ( ! update_option( self::OPTION, array_values( $kept ), false ) ) {
+			return false;
+		}
 		self::forget_blobs( array( $removed ) );
-		update_option( self::OPTION, array_values( $kept ), false );
 		return true;
 	}
 
@@ -149,8 +161,10 @@ class EMCP_Tools_Change_Log {
 	public static function clear(): int {
 		$log   = self::all();
 		$count = count( $log );
+		if ( $count && ! update_option( self::OPTION, array(), false ) ) {
+			return 0;
+		}
 		self::forget_blobs( $log );
-		update_option( self::OPTION, array(), false );
 		return $count;
 	}
 
@@ -161,15 +175,12 @@ class EMCP_Tools_Change_Log {
 	 * @return array
 	 */
 	private static function cap( array $log ): array {
-		$dropped = array();
 		if ( count( $log ) > self::MAX_COUNT ) {
-			$dropped = array_slice( $log, 0, count( $log ) - self::MAX_COUNT );
 			$log     = array_slice( $log, -self::MAX_COUNT );
 		}
 		while ( count( $log ) > 1 && strlen( (string) wp_json_encode( $log ) ) > self::MAX_BYTES ) {
-			$dropped[] = array_shift( $log );
+			array_shift( $log );
 		}
-		self::forget_blobs( $dropped );
 		return array_values( $log );
 	}
 
@@ -211,6 +222,10 @@ class EMCP_Tools_Change_Log {
 		if ( null === $rb ) {
 			return new WP_Error( 'not_reversible', __( 'This change is not reversible.', 'emcp-tools' ) );
 		}
+		$blocker = self::rollback_blocker( $entry );
+		if ( is_wp_error( $blocker ) ) {
+			return $blocker;
+		}
 
 		// Conflict guard: refuse if the target changed after we recorded it,
 		// unless the caller forces it. Undoing then would clobber newer edits.
@@ -221,19 +236,25 @@ class EMCP_Tools_Change_Log {
 			}
 		}
 
+		$was_suppressed = self::$suppress;
 		self::$suppress = true;
 		try {
 			$result = self::apply_rollback( $rb );
 		} catch ( \Throwable $e ) {
 			$result = new WP_Error( 'rollback_failed', $e->getMessage() );
 		} finally {
-			self::$suppress = false;
+			self::$suppress = $was_suppressed;
 		}
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
+		if ( true !== $result ) {
+			return new WP_Error( 'rollback_failed', __( 'The rollback handler did not confirm successful restoration.', 'emcp-tools' ) );
+		}
 
-		self::mark_rolled_back( $id );
+		if ( ! self::mark_rolled_back( $id ) ) {
+			return new WP_Error( 'rollback_state_failed', __( 'The target was restored, but History could not save completion. Inspect the target before retrying.', 'emcp-tools' ) );
+		}
 		$comp = self::record( array(
 			'domain'   => $entry['domain'] ?? '',
 			'action'   => 'rollback',
@@ -241,24 +262,56 @@ class EMCP_Tools_Change_Log {
 			'summary'  => 'Rolled back: ' . ( $entry['summary'] ?? $id ),
 			'rollback' => null,
 		) );
+		if ( '' === $comp && ! $was_suppressed ) {
+			return new WP_Error( 'rollback_audit_failed', __( 'The target was restored and marked rolled back, but the rollback activity entry could not be saved.', 'emcp-tools' ) );
+		}
 		$out = array(
 			'rolled_back'  => $id,
 			'compensating' => $comp,
 		);
-		// The DB before-image is capped, so a very large write is only partially
-		// reversible — flag it so the caller knows the restore is incomplete.
-		if ( ! empty( $rb['partial'] ) ) {
-			$out['partial']  = true;
-			$out['warning']  = __( 'Only part of this change was reversible: the before-image was capped, so some rows were not restored.', 'emcp-tools' );
-		}
 		return $out;
+	}
+
+	/**
+	 * Structural undo eligibility, shared by the API and History UI. Force may
+	 * override a state conflict, never an unsafe or incomplete inverse.
+	 *
+	 * @param array $entry Ledger entry.
+	 * @return true|WP_Error
+	 */
+	public static function rollback_blocker( array $entry ) {
+		if ( ! empty( $entry['rolled_back'] ) ) {
+			return new WP_Error( 'already_rolled_back', __( 'This change has already been rolled back.', 'emcp-tools' ) );
+		}
+		$rb = $entry['rollback'] ?? null;
+		if ( ! is_array( $rb ) || empty( $rb['type'] ) ) {
+			return new WP_Error( 'not_reversible', __( 'This change is not reversible.', 'emcp-tools' ) );
+		}
+		if ( 'db-before-image' === $rb['type'] ) {
+			return new WP_Error( 'legacy_unverified', __( 'This database snapshot does not contain verified row identities and after-state. Automatic rollback is unavailable; the snapshot is retained for inspection.', 'emcp-tools' ) );
+		}
+		if ( ! empty( $rb['partial'] ) ) {
+			return new WP_Error( 'snapshot_incomplete', __( 'This snapshot is incomplete and cannot fully restore the change.', 'emcp-tools' ) );
+		}
+		if ( 'post-restore' === $rb['type'] && 'attachment' === ( $rb['snapshot']['post']['post_type'] ?? '' ) ) {
+			return new WP_Error( 'snapshot_incomplete', __( 'This generic post snapshot has no attachment file backups. Automatic rollback is unavailable.', 'emcp-tools' ) );
+		}
+		if ( ( ! empty( $rb['creation_guard'] ) || isset( $rb['after_scope'] ) || in_array( $rb['type'], array( 'user-fields', 'acf-fields' ), true ) ) && empty( $rb['after_hash'] ) ) {
+			return new WP_Error( 'legacy_unverified', __( 'This snapshot has no verifiable after-state. Automatic rollback is unavailable.', 'emcp-tools' ) );
+		}
+		if ( 'post-fields' === $rb['type'] && ! isset( $rb['after_scope'] ) && ! empty( $rb['after_hash'] ) ) {
+			// Old post hashes omitted metadata, terms and some core fields. They
+			// cannot prove that a newer edit is safe to overwrite.
+			return new WP_Error( 'legacy_unverified', __( 'This older post snapshot does not have a complete conflict guard. Automatic rollback is unavailable.', 'emcp-tools' ) );
+		}
+		return true;
 	}
 
 	/**
 	 * Detect whether the target changed since the recorded write, by comparing
 	 * the stored `after_hash` against the target's current state hash. Returns a
-	 * `conflict` WP_Error on mismatch, or true when there is no conflict (or no
-	 * hash was recorded / the hash cannot be recomputed, e.g. DB writes).
+	 * `conflict` WP_Error on mismatch or unreadable current state. Structural
+	 * legacy restrictions are checked separately by rollback_blocker().
 	 *
 	 * @param array $rb Rollback ref.
 	 * @return true|WP_Error
@@ -270,7 +323,7 @@ class EMCP_Tools_Change_Log {
 		}
 		$current = self::current_hash( $rb );
 		if ( '' === $current ) {
-			return true; // Cannot recompute — do not block.
+			return new WP_Error( 'conflict', __( 'The current target state could not be verified. The target may have been removed or become unreadable.', 'emcp-tools' ) );
 		}
 		if ( ! hash_equals( $expected, $current ) ) {
 			return new WP_Error( 'conflict', __( 'This target has changed since the recorded change. Roll back anyway with force to overwrite the newer state.', 'emcp-tools' ) );
@@ -297,9 +350,18 @@ class EMCP_Tools_Change_Log {
 				}
 				return EMCP_Tools_Change_Recorder::hash_option( (string) ( $rb['option'] ?? '' ) );
 			case 'post-fields':
+				if ( isset( $rb['after_scope'] ) && is_array( $rb['after_scope'] ) ) {
+					return EMCP_Tools_Change_Recorder::hash_post_scope( (int) ( $rb['post_id'] ?? 0 ), $rb['after_scope'] );
+				}
 				return EMCP_Tools_Change_Recorder::hash_post( (int) ( $rb['post_id'] ?? 0 ) );
+			case 'post-create':
+				return EMCP_Tools_Change_Recorder::hash_created_resource( (int) ( $rb['post_id'] ?? 0 ) );
 			case 'meta-before-image':
 				return EMCP_Tools_Change_Recorder::hash_meta( (string) ( $rb['object'] ?? 'post' ), (int) ( $rb['id'] ?? 0 ), (array) ( $rb['meta_keys'] ?? array() ) );
+			case 'user-fields':
+				return EMCP_Tools_Change_Recorder::hash_user_fields( (int) ( $rb['user_id'] ?? 0 ), (array) ( $rb['field_keys'] ?? array() ) );
+			case 'acf-fields':
+				return EMCP_Tools_Change_Recorder::hash_acf_fields( $rb['acf_target'] ?? 0, (array) ( $rb['field_keys'] ?? array() ) );
 			default:
 				return '';
 		}
@@ -314,7 +376,10 @@ class EMCP_Tools_Change_Log {
 	private static function apply_rollback( array $rb ) {
 		// Resolve an out-of-band before-image (large snapshots live in the blob
 		// store; the row carries only a blob_id pointer).
-		if ( ! empty( $rb['blob_id'] ) && class_exists( 'EMCP_Tools_Change_Blobs' ) ) {
+		if ( ! empty( $rb['blob_id'] ) ) {
+			if ( ! class_exists( 'EMCP_Tools_Change_Blobs' ) ) {
+				return new WP_Error( 'blob_missing', __( 'The snapshot store is unavailable.', 'emcp-tools' ) );
+			}
 			$heavy = EMCP_Tools_Change_Blobs::get( (string) $rb['blob_id'] );
 			if ( ! is_array( $heavy ) ) {
 				return new WP_Error( 'blob_missing', __( 'The saved snapshot for this change is no longer available.', 'emcp-tools' ) );
@@ -372,7 +437,7 @@ class EMCP_Tools_Change_Log {
 		}
 		$data = new EMCP_Tools_Data();
 		$res  = $data->save_page_data( $post_id, $before );
-		return is_wp_error( $res ) ? $res : true;
+		return is_wp_error( $res ) ? $res : ( true === $res ? true : new WP_Error( 'rollback_failed', __( 'Could not restore the Elementor page.', 'emcp-tools' ) ) );
 	}
 
 	/**
@@ -419,44 +484,7 @@ class EMCP_Tools_Change_Log {
 	 * @return true|WP_Error
 	 */
 	private static function rollback_db( array $rb ) {
-		global $wpdb;
-		$table = (string) ( $rb['table'] ?? '' );
-		$op    = (string) ( $rb['op'] ?? '' );
-		if ( '' === $table ) {
-			return new WP_Error( 'rollback_failed', __( 'Missing table.', 'emcp-tools' ) );
-		}
-		$keys = (array) ( $rb['key_cols'] ?? array() );
-		switch ( $op ) {
-			case 'update':
-				// A row update MUST be scoped by key columns. Without them we would
-				// run an unscoped $wpdb->update touching every row — refuse instead.
-				if ( empty( $keys ) ) {
-					return new WP_Error( 'rollback_failed', __( 'Cannot roll back this update: no key columns were recorded to scope it safely.', 'emcp-tools' ) );
-				}
-				foreach ( (array) ( $rb['before_rows'] ?? array() ) as $row ) {
-					$where = array();
-					foreach ( $keys as $c ) {
-						if ( is_array( $row ) && array_key_exists( $c, $row ) ) {
-							$where[ $c ] = $row[ $c ];
-						}
-					}
-					if ( empty( $where ) ) {
-						continue; // Never update with an empty WHERE.
-					}
-					$wpdb->update( $table, $row, $where );
-				}
-				return true;
-			case 'delete':
-				foreach ( (array) ( $rb['before_rows'] ?? array() ) as $row ) {
-					$wpdb->insert( $table, $row );
-				}
-				return true;
-			case 'insert':
-				$wpdb->delete( $table, (array) ( $rb['inserted_key'] ?? array() ) );
-				return true;
-			default:
-				return new WP_Error( 'rollback_failed', __( 'Unknown DB operation.', 'emcp-tools' ) );
-		}
+		return new WP_Error( 'legacy_unverified', __( 'Database rollback requires a snapshot with verified row identities and after-state.', 'emcp-tools' ) );
 	}
 
 	/**
@@ -473,6 +501,24 @@ class EMCP_Tools_Change_Log {
 			return new WP_Error( 'rollback_failed', __( 'No attachment snapshot to restore.', 'emcp-tools' ) );
 		}
 		$old_id = (int) ( $post['ID'] ?? 0 );
+		if ( $old_id <= 0 || get_post( $old_id ) ) {
+			return new WP_Error( 'restore_identity_conflict', __( 'The original attachment ID is unavailable. Nothing was restored.', 'emcp-tools' ) );
+		}
+		// Validate every required backup before creating a post or copying files.
+		foreach ( (array) ( $snap['files'] ?? array() ) as $file ) {
+			$orig = (string) ( $file['orig'] ?? '' );
+			$backup = (string) ( $file['trashed'] ?? '' );
+			if ( '' === $orig || '' === $backup || ! is_readable( $backup ) || ! is_file( $backup ) ) {
+				return new WP_Error( 'backup_missing', __( 'A required attachment backup is unavailable. Nothing was restored.', 'emcp-tools' ) );
+			}
+			if ( file_exists( $orig ) ) {
+				return new WP_Error( 'restore_identity_conflict', __( 'An attachment destination is already occupied. Nothing was restored.', 'emcp-tools' ) );
+			}
+			$safe = self::guard_target( $orig );
+			if ( is_wp_error( $safe ) ) {
+				return $safe;
+			}
+		}
 		unset( $post['ID'] );
 		if ( $old_id > 0 && ! get_post( $old_id ) ) {
 			$post['import_id'] = $old_id;
@@ -482,9 +528,14 @@ class EMCP_Tools_Change_Log {
 			return $new_id;
 		}
 		$new_id = (int) $new_id;
+		if ( $old_id !== $new_id ) {
+			return new WP_Error( 'rollback_failed', __( 'The original attachment ID could not be restored. Inspect the partially restored attachment before retrying.', 'emcp-tools' ) );
+		}
 		foreach ( (array) ( $snap['meta'] ?? array() ) as $key => $values ) {
 			foreach ( (array) $values as $value ) {
-				add_post_meta( $new_id, (string) $key, maybe_unserialize( $value ) );
+				if ( false === add_post_meta( $new_id, (string) $key, wp_slash( maybe_unserialize( $value ) ) ) ) {
+					return new WP_Error( 'rollback_failed', __( 'The attachment was only partially restored: metadata could not be written.', 'emcp-tools' ) );
+				}
 			}
 		}
 		foreach ( (array) ( $snap['files'] ?? array() ) as $file ) {
@@ -495,7 +546,14 @@ class EMCP_Tools_Change_Log {
 				if ( ! is_dir( $parent ) && function_exists( 'wp_mkdir_p' ) ) {
 					wp_mkdir_p( $parent );
 				}
-				@copy( $trashed, $orig ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+				$copied = @copy( $trashed, $orig ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- failure returned below.
+				$source_hash = $copied ? @hash_file( 'sha256', $trashed ) : false;
+				$target_hash = $copied ? @hash_file( 'sha256', $orig ) : false;
+				if ( false === $source_hash || false === $target_hash || ! hash_equals( $source_hash, $target_hash ) ) {
+					return new WP_Error( 'rollback_failed', __( 'The attachment was only partially restored: a file could not be restored and verified.', 'emcp-tools' ) );
+				}
+			} else {
+				return new WP_Error( 'backup_missing', __( 'An attachment backup disappeared during restoration.', 'emcp-tools' ) );
 			}
 		}
 		return true;
@@ -522,8 +580,8 @@ class EMCP_Tools_Change_Log {
 		if ( ! function_exists( 'wp_delete_user' ) ) {
 			return new WP_Error( 'rollback_failed', __( 'User deletion is unavailable.', 'emcp-tools' ) );
 		}
-		wp_delete_user( $user_id );
-		return true;
+		$result = wp_delete_user( $user_id );
+		return $result && ! get_userdata( $user_id ) ? true : new WP_Error( 'rollback_failed', __( 'Could not delete the created user.', 'emcp-tools' ) );
 	}
 
 	/**
@@ -539,7 +597,16 @@ class EMCP_Tools_Change_Log {
 			return new WP_Error( 'rollback_failed', __( 'Cannot restore this user.', 'emcp-tools' ) );
 		}
 		$res = wp_update_user( array_merge( array( 'ID' => $user_id ), $before ) );
-		return is_wp_error( $res ) ? $res : true;
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
+		$user = get_userdata( $user_id );
+		foreach ( $before as $key => $value ) {
+			if ( ! $res || ! $user || (string) ( $user->$key ?? '' ) !== (string) $value ) {
+				return new WP_Error( 'rollback_failed', __( 'Could not restore the user profile.', 'emcp-tools' ) );
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -560,6 +627,9 @@ class EMCP_Tools_Change_Log {
 		}
 		foreach ( $before as $key => $value ) {
 			update_field( (string) $key, $value, $target );
+			if ( ! function_exists( 'get_field' ) || maybe_serialize( get_field( (string) $key, $target, false ) ) !== maybe_serialize( $value ) ) {
+				return new WP_Error( 'rollback_failed', __( 'Could not restore an ACF field value.', 'emcp-tools' ) );
+			}
 		}
 		return true;
 	}
@@ -580,8 +650,15 @@ class EMCP_Tools_Change_Log {
 			$name = (string) $name;
 			if ( '__ABSENT__' === $value ) {
 				delete_option( $name );
+				$absent = new \stdClass();
+				if ( $absent !== get_option( $name, $absent ) ) {
+					return new WP_Error( 'rollback_failed', __( 'Could not remove the created option.', 'emcp-tools' ) );
+				}
 			} else {
 				update_option( $name, $value );
+				if ( maybe_serialize( get_option( $name ) ) !== maybe_serialize( $value ) ) {
+					return new WP_Error( 'rollback_failed', __( 'Could not restore the option value.', 'emcp-tools' ) );
+				}
 			}
 		}
 		return true;
@@ -607,9 +684,14 @@ class EMCP_Tools_Change_Log {
 			$key   = (string) $key;
 			$empty = '' === $value || array() === $value || null === $value;
 			if ( 'term' === $object ) {
-				$empty ? delete_term_meta( $id, $key ) : update_term_meta( $id, $key, $value );
+				$empty ? delete_term_meta( $id, $key ) : update_term_meta( $id, $key, wp_slash( $value ) );
+				$actual = get_term_meta( $id, $key, ! $empty );
 			} else {
-				$empty ? delete_post_meta( $id, $key ) : update_post_meta( $id, $key, $value );
+				$empty ? delete_post_meta( $id, $key ) : update_post_meta( $id, $key, wp_slash( $value ) );
+				$actual = get_post_meta( $id, $key, ! $empty );
+			}
+			if ( $empty ? array() !== $actual : maybe_serialize( $actual ) !== maybe_serialize( $value ) ) {
+				return new WP_Error( 'rollback_failed', __( 'Could not restore the metadata value.', 'emcp-tools' ) );
 			}
 		}
 		return true;
@@ -630,18 +712,74 @@ class EMCP_Tools_Change_Log {
 		$fields = ( isset( $before['fields'] ) && is_array( $before['fields'] ) ) ? $before['fields'] : array();
 		if ( ! empty( $fields ) ) {
 			$fields['ID'] = $post_id;
-			wp_update_post( wp_slash( $fields ) );
+			$result = wp_update_post( wp_slash( $fields ), true );
+			if ( is_wp_error( $result ) || ! $result ) {
+				return is_wp_error( $result ) ? $result : new WP_Error( 'rollback_failed', __( 'Could not restore the post fields.', 'emcp-tools' ) );
+			}
+			$post = get_post( $post_id );
+			foreach ( $fields as $key => $value ) {
+				if ( ! $post || (string) ( $post->$key ?? '' ) !== (string) $value ) {
+					return new WP_Error( 'rollback_failed', __( 'The restored post fields did not match the snapshot.', 'emcp-tools' ) );
+				}
+			}
 		}
 		foreach ( (array) ( $before['meta'] ?? array() ) as $key => $value ) {
 			$key = (string) $key;
 			if ( '__DELETE__' === $value ) {
 				delete_post_meta( $post_id, $key );
+				if ( array() !== get_post_meta( $post_id, $key, false ) ) {
+					return new WP_Error( 'rollback_failed', __( 'Could not remove the created metadata.', 'emcp-tools' ) );
+				}
 			} else {
-				update_post_meta( $post_id, $key, $value );
+				update_post_meta( $post_id, $key, wp_slash( $value ) );
+				if ( maybe_serialize( get_post_meta( $post_id, $key, true ) ) !== maybe_serialize( $value ) ) {
+					return new WP_Error( 'rollback_failed', __( 'Could not restore the metadata.', 'emcp-tools' ) );
+				}
+			}
+		}
+		foreach ( (array) ( $before['meta_rows'] ?? array() ) as $key => $values ) {
+			if ( ! is_array( $values ) ) {
+				return new WP_Error( 'snapshot_invalid', __( 'The metadata snapshot is invalid.', 'emcp-tools' ) );
+			}
+			if ( get_post_meta( $post_id, (string) $key, false ) !== $values ) {
+				delete_post_meta( $post_id, (string) $key );
+				if ( array() !== get_post_meta( $post_id, (string) $key, false ) ) {
+					return new WP_Error( 'rollback_failed', __( 'Could not clear the metadata before restoring it.', 'emcp-tools' ) );
+				}
+				foreach ( $values as $value ) {
+					if ( false === add_post_meta( $post_id, (string) $key, wp_slash( $value ) ) ) {
+						return new WP_Error( 'rollback_failed', __( 'Could not restore a metadata row.', 'emcp-tools' ) );
+					}
+				}
+			}
+			if ( get_post_meta( $post_id, (string) $key, false ) !== $values ) {
+				return new WP_Error( 'rollback_failed', __( 'The restored metadata did not match the snapshot.', 'emcp-tools' ) );
+			}
+			if ( '_elementor_page_settings' === $key ) {
+				delete_post_meta( $post_id, '_elementor_css' );
+				delete_post_meta( $post_id, '_elementor_element_cache' );
+				if ( class_exists( '\\Elementor\\Core\\Files\\CSS\\Post' ) ) {
+					$css = new \Elementor\Core\Files\CSS\Post( $post_id );
+					$css->delete();
+				}
 			}
 		}
 		foreach ( (array) ( $before['terms'] ?? array() ) as $tax => $ids ) {
-			wp_set_object_terms( $post_id, array_map( 'intval', (array) $ids ), (string) $tax, false );
+			$ids = array_map( 'intval', (array) $ids );
+			$result = wp_set_object_terms( $post_id, $ids, (string) $tax, false );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			$actual = wp_get_object_terms( $post_id, (string) $tax, array( 'fields' => 'ids' ) );
+			if ( is_wp_error( $actual ) ) {
+				return $actual;
+			}
+			$actual = array_map( 'intval', (array) $actual );
+			sort( $actual );
+			sort( $ids );
+			if ( $actual !== $ids ) {
+				return new WP_Error( 'rollback_failed', __( 'Could not restore the taxonomy terms.', 'emcp-tools' ) );
+			}
 		}
 		return true;
 	}
@@ -658,9 +796,44 @@ class EMCP_Tools_Change_Log {
 			return new WP_Error( 'rollback_failed', __( 'Missing post id.', 'emcp-tools' ) );
 		}
 		if ( ! get_post( $post_id ) ) {
+			foreach ( (array) ( $rb['created_files'] ?? array() ) as $path ) {
+				clearstatcache( true, $path );
+				if ( file_exists( $path ) ) {
+					return new WP_Error( 'rollback_failed', __( 'The attachment is gone but an uploaded file remains. Manual file cleanup is required.', 'emcp-tools' ) );
+				}
+			}
 			return true; // Already gone.
 		}
-		wp_delete_post( $post_id, true );
+		$post = get_post( $post_id );
+		$files = ! empty( $rb['creation_guard'] ) && 'attachment' === ( $post->post_type ?? '' )
+			? EMCP_Tools_Change_Recorder::attachment_files( $post_id ) : array();
+		$files = array_unique( array_merge( $files, (array) ( $rb['created_files'] ?? array() ) ) );
+		// WP's path_join() does not recognize Windows drive paths with forward
+		// slashes. Give core a native path for this attachment so its own guarded
+		// deletion removes the sub-sizes too; retain all WordPress delete hooks.
+		$native_path = static function ( $file, $attachment_id ) use ( $post_id ) {
+			return (int) $attachment_id === $post_id ? ( realpath( $file ) ?: $file ) : $file;
+		};
+		$normalize = '\\' === DIRECTORY_SEPARATOR && ! empty( $files ) && function_exists( 'add_filter' );
+		if ( $normalize ) {
+			add_filter( 'get_attached_file', $native_path, PHP_INT_MAX, 2 );
+		}
+		try {
+			$result = wp_delete_post( $post_id, true );
+		} finally {
+			if ( $normalize ) {
+				remove_filter( 'get_attached_file', $native_path, PHP_INT_MAX );
+			}
+		}
+		if ( ! $result || get_post( $post_id ) ) {
+			return new WP_Error( 'rollback_failed', __( 'Could not delete the created post.', 'emcp-tools' ) );
+		}
+		foreach ( $files as $path ) {
+			clearstatcache( true, $path );
+			if ( file_exists( $path ) ) {
+				return new WP_Error( 'rollback_failed', __( 'The attachment was removed, but an uploaded file could not be deleted. Inspect the files before retrying.', 'emcp-tools' ) );
+			}
+		}
 		return true;
 	}
 
@@ -677,15 +850,24 @@ class EMCP_Tools_Change_Log {
 			if ( $post_id <= 0 ) {
 				return new WP_Error( 'rollback_failed', __( 'Missing post id.', 'emcp-tools' ) );
 			}
-			wp_untrash_post( $post_id );
-			return true;
+			$result = wp_untrash_post( $post_id );
+			$post = get_post( $post_id );
+			return $result && $post && 'trash' !== $post->post_status ? true : new WP_Error( 'rollback_failed', __( 'Could not restore the trashed post.', 'emcp-tools' ) );
 		}
 		$snap = ( isset( $rb['snapshot'] ) && is_array( $rb['snapshot'] ) ) ? $rb['snapshot'] : array();
 		$post = ( isset( $snap['post'] ) && is_array( $snap['post'] ) ) ? $snap['post'] : array();
 		if ( empty( $post ) ) {
 			return new WP_Error( 'rollback_failed', __( 'No snapshot to restore.', 'emcp-tools' ) );
 		}
+		// Also guard legacy snapshots loaded from blobs: restoring just the
+		// attachment row and metadata would leave a broken media-library item.
+		if ( 'attachment' === ( $post['post_type'] ?? '' ) ) {
+			return new WP_Error( 'snapshot_incomplete', __( 'This generic post snapshot has no attachment file backups. Automatic rollback is unavailable.', 'emcp-tools' ) );
+		}
 		$old_id = (int) ( $post['ID'] ?? 0 );
+		if ( $old_id <= 0 || get_post( $old_id ) ) {
+			return new WP_Error( 'restore_identity_conflict', __( 'The original post ID is unavailable. Nothing was restored.', 'emcp-tools' ) );
+		}
 		unset( $post['ID'] );
 		if ( $old_id > 0 && ! get_post( $old_id ) ) {
 			$post['import_id'] = $old_id; // Reuse the original id when it is free.
@@ -695,13 +877,21 @@ class EMCP_Tools_Change_Log {
 			return $new_id;
 		}
 		$new_id = (int) $new_id;
+		if ( $old_id !== $new_id ) {
+			return new WP_Error( 'rollback_failed', __( 'The original post ID could not be restored. Inspect the partially restored post before retrying.', 'emcp-tools' ) );
+		}
 		foreach ( (array) ( $snap['meta'] ?? array() ) as $key => $values ) {
 			foreach ( (array) $values as $value ) {
-				add_post_meta( $new_id, (string) $key, maybe_unserialize( $value ) );
+				if ( false === add_post_meta( $new_id, (string) $key, wp_slash( maybe_unserialize( $value ) ) ) ) {
+					return new WP_Error( 'rollback_failed', __( 'The post was only partially restored: metadata could not be written.', 'emcp-tools' ) );
+				}
 			}
 		}
 		foreach ( (array) ( $snap['terms'] ?? array() ) as $tax => $ids ) {
-			wp_set_object_terms( $new_id, array_map( 'intval', (array) $ids ), (string) $tax, false );
+			$result = wp_set_object_terms( $new_id, array_map( 'intval', (array) $ids ), (string) $tax, false );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
 		}
 		return true;
 	}

@@ -54,7 +54,7 @@ class EMCP_Tools_Transaction_Abilities {
 				'input_schema'        => array(
 					'type'       => 'object',
 					'properties' => array(
-						'domain'      => array( 'type' => 'string', 'enum' => array( 'elementor', 'filesystem', 'database' ), 'description' => __( 'Filter by domain.', 'emcp-tools' ) ),
+						'domain'      => array( 'type' => 'string', 'description' => __( 'Filter by a recorded domain, such as elementor, content, media, settings, globals, acf, users, seo, redirect, filesystem, database or wpcli.', 'emcp-tools' ) ),
 						'rolled_back' => array( 'type' => 'boolean', 'description' => __( 'Only entries with this rolled-back state.', 'emcp-tools' ) ),
 						'reversible'  => array( 'type' => 'boolean', 'description' => __( 'Only entries that are (or are not) reversible.', 'emcp-tools' ) ),
 						'limit'       => array( 'type' => 'integer', 'description' => __( 'Max entries (default 50).', 'emcp-tools' ) ),
@@ -117,7 +117,8 @@ class EMCP_Tools_Transaction_Abilities {
 			if ( '' !== $domain && ( $e['domain'] ?? '' ) !== $domain ) {
 				continue;
 			}
-			$reversible = ! empty( $e['rollback'] ) && empty( $e['rolled_back'] );
+			$blocker    = EMCP_Tools_Change_Log::rollback_blocker( $e );
+			$reversible = ! is_wp_error( $blocker );
 			if ( isset( $input['rolled_back'] ) && (bool) $input['rolled_back'] !== ! empty( $e['rolled_back'] ) ) {
 				continue;
 			}
@@ -134,6 +135,7 @@ class EMCP_Tools_Transaction_Abilities {
 				'summary'     => $e['summary'] ?? '',
 				'rolled_back' => ! empty( $e['rolled_back'] ),
 				'reversible'  => $reversible,
+				'rollback_unavailable_reason' => is_wp_error( $blocker ) ? $blocker->get_error_message() : '',
 				'rollback'    => self::light_rollback( $e['rollback'] ?? null ),
 			);
 			if ( count( $out ) >= $limit ) {
@@ -184,7 +186,7 @@ class EMCP_Tools_Transaction_Abilities {
 		if ( ! is_array( $rollback ) ) {
 			return null;
 		}
-		unset( $rollback['before_rows'], $rollback['before'], $rollback['inserted_key'] );
+		unset( $rollback['before_rows'], $rollback['before'], $rollback['inserted_key'], $rollback['snapshot'], $rollback['values'] );
 		return $rollback;
 	}
 }

@@ -458,7 +458,11 @@ class EMCP_Tools_Data {
 			return $document;
 		}
 
+		$before = get_post_meta( $post_id, '_elementor_page_settings', false );
 		$result = $document->save( array( 'settings' => $settings ) );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
 		if ( ! $result ) {
 			// Fallback: merge settings into existing page settings meta.
@@ -468,12 +472,38 @@ class EMCP_Tools_Data {
 			}
 
 			$merged = array_merge( $existing, $settings );
-			update_post_meta( $post_id, '_elementor_page_settings', $merged );
+			update_post_meta( $post_id, '_elementor_page_settings', wp_slash( $merged ) );
 
 			// Invalidate CSS cache.
 			delete_post_meta( $post_id, '_elementor_css' );
 		}
 
+		$after = get_post_meta( $post_id, '_elementor_page_settings', false );
+		if ( ! $result && ( empty( $after ) || $merged !== $after[0] ) ) {
+			return new \WP_Error( 'save_failed', __( 'Could not persist the page settings.', 'emcp-tools' ) );
+		}
+		// Custom CSS is stored verbatim in this meta. Other native settings can
+		// map to post fields or be normalized by Elementor; do not reject those
+		// merely because their input representation is absent from this meta.
+		if ( $result && $before === $after && array_key_exists( 'custom_css', $settings ) ) {
+			$stored = isset( $after[0] ) && is_array( $after[0] ) ? $after[0] : array();
+			if ( ! array_key_exists( 'custom_css', $stored ) || $stored['custom_css'] !== $settings['custom_css'] ) {
+				return new \WP_Error( 'save_failed', __( 'Elementor did not persist the requested custom CSS.', 'emcp-tools' ) );
+			}
+		}
+		if ( $before !== $after && class_exists( 'EMCP_Tools_Change_Recorder' ) ) {
+			$history_id = EMCP_Tools_Change_Recorder::record_post_fields(
+				$post_id,
+				array( 'meta_rows' => array( '_elementor_page_settings' => $before ) ),
+				sprintf( 'Updated Elementor page settings #%d', $post_id ),
+				'Elementor page #' . $post_id,
+				'elementor',
+				'page-settings'
+			);
+			if ( '' === $history_id && ! EMCP_Tools_Change_Log::$suppress ) {
+				return new \WP_Error( 'history_record_failed', __( 'The page settings were saved, but their History entry could not be persisted.', 'emcp-tools' ) );
+			}
+		}
 		return true;
 	}
 

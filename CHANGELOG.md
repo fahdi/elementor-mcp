@@ -2,6 +2,17 @@
 
 All notable changes to MCP Tools for Elementor are documented in this file.
 
+## [3.17.0]
+
+> Adds creation undo for Elementor pages and uploads, records page settings and CSS changes, and strengthens History's rollback verification.
+
+- Fixed: **Page creation undo removes the created page.** `create-page` now records one creation event, including initial Elementor content, and returns its `change_id`. Initialization no longer produces an edit-only undo that leaves an empty page behind.
+- New: **Uploaded media is recorded in History.** `upload-media` returns a creation change ID; undo removes the attachment and verifies deletion of its recorded WordPress-managed files. Creation guards protect later page edits, attachment metadata, and changed image bytes. Windows attachment paths are normalized during undo so WordPress also deletes generated image sizes.
+- Fixed: **Page settings and custom CSS changes have undo records.** Rollback preserves exact prior metadata rows, including absent values and escaped CSS, and invalidates Elementor caches. Identical CSS saves do not add redundant entries.
+- Improved: **Rollback protects the state an operation actually changed.** Post-field guards include metadata and taxonomy assignments; user and ACF updates also verify their recorded after-state. Unrelated post-field edits remain intact, while an undated draft's automatically advancing clock does not falsely block creation undo.
+- Fixed: **Failed restoration is no longer marked successful.** Rollback checks write results and restored values, refuses occupied post or attachment IDs and missing file backups, preserves outer recording suppression, and surfaces History persistence failures. Ledger cleanup retains snapshot blobs when the ledger write fails.
+- Changed: **Incomplete or unverified snapshots refuse automatic undo, even with force.** This includes database snapshots without verified row identities and after-state, older post snapshots without complete conflict guards, and generic attachment-deletion snapshots without file backups. History and MCP listings show why undo is unavailable; retained snapshots remain available for inspection. This release does not reconstruct previously omitted actions or provide universal rollback coverage.
+
 ## [3.16.1]
 
 - Fixed: **The detected Server URL no longer includes `index.php` on plain-permalink sites.** `detected_base_url()` now strips the `index.php` WordPress inserts before the query string when permalinks are set to "Plain," the same way it already strips `/wp-json/` on pretty permalinks. Previously this leaked into the Connection tab's detected default and the site URL baked into a generated `.mcpb` bundle, breaking the connector until a user manually edited the URL.

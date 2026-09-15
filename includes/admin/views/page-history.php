@@ -162,7 +162,8 @@ $emcp_cleared = isset( $_GET['cleared'] ) ? absint( wp_unslash( $_GET['cleared']
 					<?php
 					$emcp_id         = (string) ( $emcp_e['id'] ?? '' );
 					$emcp_ts         = (int) ( $emcp_e['ts'] ?? 0 );
-					$emcp_reversible = ! empty( $emcp_e['rollback'] ) && empty( $emcp_e['rolled_back'] );
+					$emcp_blocker    = EMCP_Tools_Change_Log::rollback_blocker( $emcp_e );
+					$emcp_reversible = ! is_wp_error( $emcp_blocker );
 					$emcp_dk         = (string) ( $emcp_e['domain'] ?? '' );
 					?>
 					<tr>
@@ -190,7 +191,7 @@ $emcp_cleared = isset( $_GET['cleared'] ) ? absint( wp_unslash( $_GET['cleared']
 									<?php esc_html_e( 'Roll back', 'emcp-tools' ); ?>
 								</a>
 							<?php else : ?>
-								<span class="emcp-history__state">, </span>
+								<span class="emcp-history__state" title="<?php echo esc_attr( is_wp_error( $emcp_blocker ) ? $emcp_blocker->get_error_message() : '' ); ?>"><?php esc_html_e( 'Undo unavailable', 'emcp-tools' ); ?></span>
 							<?php endif; ?>
 							<a class="emcp-history__delete"
 								href="<?php echo esc_url( EMCP_Tools_Admin::delete_change_url( $emcp_id, $emcp_history_page, $emcp_domain ) ); ?>"
