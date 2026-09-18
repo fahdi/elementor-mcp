@@ -38,6 +38,9 @@ class EMCP_Tools_Elementor_Notice {
 	 * Decide whether the notice should render on the current request.
 	 */
 	private function should_show(): bool {
+		if ( class_exists( 'EMCP_Tools_Page_Builders' ) && in_array( EMCP_Tools_Page_Builders::selected(), array( 'bricks', 'bebuilder', 'breakdance', 'avada' ), true ) ) {
+			return false;
+		}
 		// Admins only.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return false;

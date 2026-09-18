@@ -13,15 +13,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /** @var EMCP_Tools_Admin $this */
-$emcp_tools_all_tools     = $this->get_all_tools();
+$emcp_tools_all_tools     = EMCP_Tools_Page_Builders::visible_categories( $this->get_all_tools() );
 $emcp_tools_disabled      = get_option( EMCP_Tools_Admin::OPTION_DISABLED_TOOLS, array() );
 $emcp_tools_disabled      = is_array( $emcp_tools_disabled ) ? $emcp_tools_disabled : array();
 $emcp_tools_enabled_count = $this->get_enabled_tool_count();
 $emcp_tools_total_count   = $this->get_total_tool_count();
 $emcp_tools_compact_mode  = '1' === (string) get_option( EMCP_Tools_Plugin::OPTION_DISPATCHER_MODE, '0' );
 
-$emcp_tools_tabs               = EMCP_Tools_Admin::platform_tabs();
-$emcp_tools_buckets            = EMCP_Tools_Admin::partition_by_platform( $emcp_tools_all_tools );
+$emcp_tools_tabs               = EMCP_Tools_Admin::visible_platform_tabs();
+$emcp_tools_buckets            = array_intersect_key( EMCP_Tools_Admin::partition_by_platform( $emcp_tools_all_tools ), $emcp_tools_tabs );
 $emcp_tools_elementor_active   = EMCP_Tools_Bootstrap::elementor_active();
 // Whether this build can run Pro code. Pro tool sections stay visible on free
 // (as an upsell) but locked; get_all_tools() already flags their tools.

@@ -78,6 +78,10 @@ includes/blocks-catalog/class-blocksy-blocks-catalog.php
 includes/abilities/class-blocksy-blocks-integration.php
 includes/abilities/class-blocksy-extensions-integration.php
 includes/abilities/class-betheme-integration.php
+includes/bricks/class-bricks-tree.php
+includes/abilities/class-bricks-integration.php
+includes/breakdance/class-breakdance-tree.php
+includes/abilities/class-breakdance-integration.php
 
 # Backup & Migrate module (Pro) — Phase 1 + Phase 2 (connector + migration)
 includes/modules/class-migrate-module.php
@@ -88,3 +92,16 @@ includes/abilities/class-migrate-abilities.php
 assets/js/migrate.js
 assets/css/migrate.css
 connector
+
+includes/avada/class-avada-tree.php
+includes/thrive/class-thrive-content.php
+includes/abilities/class-thrive-integration.php
+includes/divi/class-divi-tree.php
+includes/divi/class-divi-settings.php
+includes/divi/class-divi-theme-builder.php
+includes/abilities/class-divi-integration.php
+includes/abilities/class-avada-integration.php
+
+includes/oxygen/class-oxygen-tree.php
+includes/oxygen/class-oxygen-styles.php
+includes/abilities/class-oxygen-integration.php

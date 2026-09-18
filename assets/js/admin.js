@@ -187,13 +187,16 @@
 		function activate( tabId ) {
 			var matched = false;
 			panels.forEach( function ( panel ) {
-				var on = panel.getAttribute( 'data-tab' ) === tabId;
-				panel.classList.toggle( 'is-active', on );
-				if ( on ) { matched = true; }
+				if ( panel.getAttribute( 'data-tab' ) === tabId ) { matched = true; }
 			} );
 			if ( ! matched ) {
 				return; // unknown stored id (e.g. a removed tab) — leave server default.
 			}
+			// Validate before changing visibility: a previous builder's saved tab
+			// may no longer exist after switching integrations.
+			panels.forEach( function ( panel ) {
+				panel.classList.toggle( 'is-active', panel.getAttribute( 'data-tab' ) === tabId );
+			} );
 			tabs.forEach( function ( tab ) {
 				var on = tab.getAttribute( 'data-tab' ) === tabId;
 				tab.classList.toggle( 'is-active', on );
@@ -1875,7 +1878,22 @@
 		} );
 	}
 
+	// Page builders use one selection; Gutenberg is an independent companion.
+	function initPageBuilders() {
+		var form = document.getElementById( 'emcp-page-builders-form' );
+		if ( ! form ) { return; }
+		form.addEventListener( 'change', function ( event ) {
+			if ( ! event.target.matches( '[data-emcp-builder]' ) ) { return; }
+			if ( event.target.checked ) {
+				form.querySelectorAll( '[data-emcp-builder]' ).forEach( function ( toggle ) {
+					if ( toggle !== event.target ) { toggle.checked = false; }
+				} );
+			}
+		} );
+	}
+
 	function initAll() {
+		initPageBuilders();
 		initToolsForm();
 		initBase64Generator();
 		initCopyButtons();

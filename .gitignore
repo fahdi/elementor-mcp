@@ -82,6 +82,12 @@ skills/*
 # Release-facing integration guides are the only public files under docs/.
 /docs/*
 !/docs/ACF-MCP-COVERAGE.md
+!/docs/BRICKS-INTEGRATION.md
+!/docs/BREAKDANCE-INTEGRATION.md
+!/docs/AVADA-INTEGRATION.md
+!/docs/DIVI-INTEGRATION.md
+!/docs/THRIVE-INTEGRATION.md
+!/docs/OXYGEN-INTEGRATION.md
 !/docs/GSAP-INTEGRATION.md
 .commandcode/
 
@@ -112,6 +118,7 @@ skills/*
 
 # Playwright MCP + local test artifacts (never committed)
 .playwright-mcp/
+/scripts/e2e/.breakdance-*.json
 /services-final.png
 /services-page.png
 

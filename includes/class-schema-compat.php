@@ -42,6 +42,16 @@ class EMCP_Tools_Schema_Compat {
 	 * @return mixed The result of wp_register_ability().
 	 */
 	public static function register_ability( string $name, array $args ) {
+		$builder = class_exists( 'EMCP_Tools_Page_Builders' ) ? EMCP_Tools_Page_Builders::$registering : '';
+		if ( '' !== $builder && isset( $args['execute_callback'] ) && is_callable( $args['execute_callback'] ) ) {
+			$callback = $args['execute_callback'];
+			$args['execute_callback'] = static function ( ...$input ) use ( $builder, $callback ) {
+				if ( ! EMCP_Tools_Page_Builders::enabled( $builder ) ) {
+					return new WP_Error( 'builder_disabled', __( 'This page builder integration is disabled.', 'emcp-tools' ) );
+				}
+				return $callback( ...$input );
+			};
+		}
 		$strict = self::use_strict_schemas();
 
 		if ( isset( $args['input_schema'] ) && is_array( $args['input_schema'] ) ) {

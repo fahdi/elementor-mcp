@@ -1,7 +1,7 @@
 <?php
 /**
- * Kadence Blocks integration — the "blocks/builder" pack for Kadence, under the
- * Themes tab.
+ * Kadence Blocks native adapter, independent of the Kadence theme. The block-pack
+ * integration exposes its operations in the dedicated Kadence Blocks tab.
  *
  * `kadence-blocks-read`  : list-blocks (curated catalog over the live registry),
  *                          get-block-schema (real attributes + defaults + example)

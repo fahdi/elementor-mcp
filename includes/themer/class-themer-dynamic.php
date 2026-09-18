@@ -387,6 +387,19 @@ class EMCP_Tools_Themer_Dynamic {
 		if ( ! $id ) {
 			return '';
 		}
+		// Bricks stores the queried page in postmeta, leaving post_content empty.
+		// Render it natively when a Themer body contains the Post Content block.
+		if ( 'bricks' === get_template() && 'bricks' === get_post_meta( $id, '_bricks_editor_mode', true )
+			&& class_exists( '\\Bricks\\Frontend' ) && class_exists( '\\Bricks\\Database' ) && class_exists( '\\Bricks\\Helpers' ) ) {
+			if ( ! \Bricks\Helpers::render_with_bricks( $id ) ) { return ''; }
+			static $rendering_bricks = false;
+			if ( $rendering_bricks ) { return ''; }
+			$rendering_bricks = true;
+			try {
+				$content = \Bricks\Frontend::render_data( \Bricks\Database::get_data( $id, 'content' ), 'content' );
+				return '<div class="emcp-dyn emcp-dyn-post-content entry-content">' . $content . '</div>';
+			} finally { $rendering_bricks = false; }
+		}
 		$content = get_post_field( 'post_content', $id );
 		$content = apply_filters( 'the_content', (string) $content );
 		$content = str_replace( ']]>', ']]&gt;', $content );

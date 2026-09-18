@@ -135,6 +135,7 @@ class EMCP_Tools_Bootstrap {
 	 * @since 2.1.0
 	 */
 	private static function load_classes(): void {
+		require_once EMCP_TOOLS_DIR . 'includes/class-page-builders.php';
 		// Schema compatibility + the emcp_tools_register_ability() entry point
 		// must load before any ability group registers.
 		require_once EMCP_TOOLS_DIR . 'includes/class-schema-compat.php';
@@ -301,6 +302,7 @@ class EMCP_Tools_Bootstrap {
 		// (loaded eagerly by Pro_Loader::load_runtime below) extend them, and their
 		// free subclasses in the deferred MCP surface do too. Bases must precede both.
 		require_once EMCP_TOOLS_DIR . 'includes/abilities/class-theme-integration.php';
+		require_once EMCP_TOOLS_DIR . 'includes/abilities/class-block-pack-integration.php';
 		require_once EMCP_TOOLS_DIR . 'includes/abilities/forms/class-form-integration.php';
 		require_once EMCP_TOOLS_DIR . 'includes/abilities/seo/class-seo-integration.php';
 		require_once EMCP_TOOLS_DIR . 'includes/class-pro-loader.php';
@@ -518,11 +520,6 @@ class EMCP_Tools_Bootstrap {
 		EMCP_Tools_Pro_Loader::load_admin();
 		EMCP_Tools_Pro_Loader::wire_admin_hooks();
 
-		// Non-blocking, per-user-dismissible nudge to install Elementor when it is
-		// absent (Elementor is optional; every other tool works without it).
-		require_once EMCP_TOOLS_DIR . 'includes/admin/class-elementor-notice.php';
-		( new EMCP_Tools_Elementor_Notice() )->init();
-
 		require_once EMCP_TOOLS_DIR . 'includes/admin/class-upgrade-notice.php';
 		( new EMCP_Tools_Upgrade_Notice() )->init();
 
@@ -603,9 +600,8 @@ class EMCP_Tools_Bootstrap {
 
 		// Elementor is OPTIONAL. When absent, the plugin still loads and every
 		// beyond-Elementor tool works; only the Elementor tool family + the
-		// Elementor admin areas are unavailable. The non-blocking, per-user
-		// dismissible "Install Elementor" nudge is handled by
-		// EMCP_Tools_Elementor_Notice, wired in load_admin().
+		// Elementor admin areas are unavailable. Builder availability is shown
+		// on the Page Builders screen instead of an installation notice.
 
 		return true;
 	}

@@ -106,6 +106,8 @@ class EMCP_Tools_Ability_Registrar {
 			if ( function_exists( 'error_log' ) ) {
 				error_log( 'EMCP Tools: ability registration stopped early: ' . $e->getMessage() );
 			}
+		} finally {
+			EMCP_Tools_Page_Builders::$registering = '';
 		}
 
 		if ( $profile && function_exists( 'error_log' ) ) {
@@ -137,6 +139,7 @@ class EMCP_Tools_Ability_Registrar {
 	 * @return void
 	 */
 	private function register_groups( bool $elementor_active = true ): void {
+		$elementor_active = $elementor_active && EMCP_Tools_Page_Builders::enabled( 'elementor' );
 		// ---- Always-on: pure-WordPress tool groups (no Elementor needed) ----
 
 		// Media Library query ability (list/search the site's own uploads).
@@ -338,6 +341,56 @@ class EMCP_Tools_Ability_Registrar {
 			}
 		}
 
+		if ( EMCP_Tools_Page_Builders::enabled( 'thrive' ) ) {
+			$thrive = new EMCP_Tools_Thrive_Integration();
+			EMCP_Tools_Page_Builders::$registering = 'thrive';
+			try { $thrive->register(); } finally { EMCP_Tools_Page_Builders::$registering = ''; }
+			$this->ability_names = array_merge( $this->ability_names, $thrive->get_ability_names() );
+		}
+		if ( EMCP_Tools_Page_Builders::enabled( 'divi' ) ) {
+			$divi = new EMCP_Tools_Divi_Integration();
+			EMCP_Tools_Page_Builders::$registering = 'divi';
+			try { $divi->register(); } finally { EMCP_Tools_Page_Builders::$registering = ''; }
+			$this->ability_names = array_merge( $this->ability_names, $divi->get_ability_names() );
+		}
+
+		if ( EMCP_Tools_Page_Builders::enabled( 'avada' ) ) {
+			$avada = new EMCP_Tools_Avada_Integration();
+			EMCP_Tools_Page_Builders::$registering = 'avada';
+			try { $avada->register(); } finally { EMCP_Tools_Page_Builders::$registering = ''; }
+			$this->ability_names = array_merge( $this->ability_names, $avada->get_ability_names() );
+		}
+
+		if ( EMCP_Tools_Page_Builders::enabled( 'oxygen' ) ) {
+			$oxygen = new EMCP_Tools_Oxygen_Integration();
+			EMCP_Tools_Page_Builders::$registering = 'oxygen';
+			try { $oxygen->register(); } finally { EMCP_Tools_Page_Builders::$registering = ''; }
+			$this->ability_names = array_merge( $this->ability_names, $oxygen->get_ability_names() );
+		}
+
+		if ( EMCP_Tools_Page_Builders::enabled( 'breakdance' ) ) {
+			$breakdance = new EMCP_Tools_Breakdance_Integration();
+			EMCP_Tools_Page_Builders::$registering = 'breakdance';
+			try { $breakdance->register(); } finally { EMCP_Tools_Page_Builders::$registering = ''; }
+			$this->ability_names = array_merge( $this->ability_names, $breakdance->get_ability_names() );
+		}
+
+		if ( EMCP_Tools_Page_Builders::enabled( 'bricks' ) ) {
+			$bricks = new EMCP_Tools_Bricks_Integration();
+			EMCP_Tools_Page_Builders::$registering = 'bricks';
+			try { $bricks->register(); } finally { EMCP_Tools_Page_Builders::$registering = ''; }
+			$this->ability_names = array_merge( $this->ability_names, $bricks->get_ability_names() );
+		}
+
+		// Independently enabled Gutenberg extension integrations.
+		foreach ( EMCP_Tools_Page_Builders::block_packs() as $pack_id => $pack ) {
+			if ( EMCP_Tools_Page_Builders::enabled( $pack_id ) ) {
+				$integration = new EMCP_Tools_Block_Pack_Integration( $pack_id );
+				$integration->register();
+				$this->ability_names = array_merge( $this->ability_names, $integration->get_ability_names() );
+			}
+		}
+
 		// Themes-tab integrations — the framework-agnostic active-theme pack always,
 		// per-framework packs only when that framework is the active theme.
 		$theme_integrations = array();
@@ -347,21 +400,12 @@ class EMCP_Tools_Ability_Registrar {
 		if ( class_exists( 'EMCP_Tools_Astra_Integration' ) ) {
 			$theme_integrations[] = new EMCP_Tools_Astra_Integration();
 		}
-		if ( class_exists( 'EMCP_Tools_Spectra_Integration' ) ) {
-			$theme_integrations[] = new EMCP_Tools_Spectra_Integration();
-		}
 		if ( class_exists( 'EMCP_Tools_Kadence_Integration' ) ) {
 			$theme_integrations[] = new EMCP_Tools_Kadence_Integration();
-		}
-		if ( class_exists( 'EMCP_Tools_Kadence_Blocks_Integration' ) ) {
-			$theme_integrations[] = new EMCP_Tools_Kadence_Blocks_Integration();
 		}
 		// GeneratePress + GenerateBlocks (Pro; classes only present when Pro loaded).
 		if ( class_exists( 'EMCP_Tools_GeneratePress_Integration' ) ) {
 			$theme_integrations[] = new EMCP_Tools_GeneratePress_Integration();
-		}
-		if ( class_exists( 'EMCP_Tools_GenerateBlocks_Integration' ) ) {
-			$theme_integrations[] = new EMCP_Tools_GenerateBlocks_Integration();
 		}
 		// BeTheme (Pro): theme options + BeBuilder page content. Registers only
 		// when BeTheme is the active template, so a child theme counts too.
@@ -376,8 +420,16 @@ class EMCP_Tools_Ability_Registrar {
 			$theme_integrations[] = new EMCP_Tools_Blocksy_Extensions_Integration();
 		}
 		foreach ( $theme_integrations as $theme_integration ) {
+			if ( 'betheme' === $theme_integration->id() && ! EMCP_Tools_Page_Builders::enabled( 'bebuilder' ) ) {
+				continue;
+			}
 			if ( $theme_integration->is_available() ) {
-				$theme_integration->register();
+				EMCP_Tools_Page_Builders::$registering = 'betheme' === $theme_integration->id() ? 'bebuilder' : '';
+				try {
+					$theme_integration->register();
+				} finally {
+					EMCP_Tools_Page_Builders::$registering = '';
+				}
 				$this->ability_names = array_merge( $this->ability_names, $theme_integration->get_ability_names() );
 			}
 		}
@@ -392,8 +444,10 @@ class EMCP_Tools_Ability_Registrar {
 			}
 		}
 		foreach ( $addon_packs as $addon_pack ) {
-			if ( $addon_pack->is_available() ) {
+			if ( $elementor_active && $addon_pack->is_available() ) {
+				EMCP_Tools_Page_Builders::$registering = 'elementor';
 				$addon_pack->register();
+				EMCP_Tools_Page_Builders::$registering = '';
 				$this->ability_names = array_merge( $this->ability_names, $addon_pack->get_ability_names() );
 			}
 		}
@@ -402,10 +456,12 @@ class EMCP_Tools_Ability_Registrar {
 		// Both a widget pack AND a data plugin, so unlike the pure packs it keeps
 		// the house read/write dispatcher pair: discovery + templates on read,
 		// templates on write.
-		if ( class_exists( 'EMCP_Tools_UAE_Integration' ) ) {
+		if ( $elementor_active && class_exists( 'EMCP_Tools_UAE_Integration' ) ) {
 			$emcp_uae = new EMCP_Tools_UAE_Integration();
 			if ( $emcp_uae->is_available() ) {
+				EMCP_Tools_Page_Builders::$registering = 'elementor';
 				$emcp_uae->register();
+				EMCP_Tools_Page_Builders::$registering = '';
 				$this->ability_names = array_merge( $this->ability_names, $emcp_uae->get_ability_names() );
 			}
 		}
@@ -472,6 +528,7 @@ class EMCP_Tools_Ability_Registrar {
 
 		// ---- Elementor-dependent groups: only when Elementor is active ----
 		if ( $elementor_active ) {
+			EMCP_Tools_Page_Builders::$registering = 'elementor';
 			// P0 query/discovery.
 			$query = new EMCP_Tools_Query_Abilities( $this->data, $this->schema_generator );
 			$query->register();
@@ -582,6 +639,8 @@ class EMCP_Tools_Ability_Registrar {
 				$this->ability_names = array_merge( $this->ability_names, $widget_builder->get_ability_names() );
 			}
 		}
+
+		EMCP_Tools_Page_Builders::$registering = '';
 
 		// Skills read-side (Pro; self-guards on license). Not Elementor-dependent,
 		// so it registers regardless of whether Elementor is active — but gated by

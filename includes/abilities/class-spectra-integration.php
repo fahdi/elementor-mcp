@@ -1,7 +1,7 @@
 <?php
 /**
- * Spectra Blocks integration — the "blocks/builder" pack for the Astra + Spectra
- * combo, under the Themes tab.
+ * Spectra native block adapter, independent of Astra. The block-pack integration
+ * exposes its operations in the dedicated Spectra tab and compatibility tools.
  *
  * `spectra-read`  : list-blocks (dynamic catalog), get-block-schema (curated params + example)
  * `spectra-write` : add-block (insert a Spectra block with curated defaults + block_id)
