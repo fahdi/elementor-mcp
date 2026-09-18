@@ -384,6 +384,7 @@ class EMCP_Tools_Bootstrap {
 		require_once EMCP_TOOLS_DIR . 'includes/abilities/class-kadence-blocks-integration.php';
 		require_once EMCP_TOOLS_DIR . 'includes/abilities/forms/class-cf7-integration.php';
 		require_once EMCP_TOOLS_DIR . 'includes/abilities/seo/class-slimseo-integration.php';
+		require_once EMCP_TOOLS_DIR . 'includes/abilities/seo/class-visibility-integration.php';
 		require_once EMCP_TOOLS_DIR . 'includes/performance/class-performance-finding.php';
 		require_once EMCP_TOOLS_DIR . 'includes/performance/class-performance-server-audit.php';
 		require_once EMCP_TOOLS_DIR . 'includes/performance/class-performance-page-audit.php';
