@@ -91,16 +91,22 @@ class EMCP_Tools_Cloud_Sync {
 	 * the cloud in one call — the bulk counterpart to backup(). Reuses the
 	 * per-artifact backup() so each push keeps its checksum/validation.
 	 *
+	 * Artifacts whose content has not changed since their last push are skipped
+	 * (the cloud PUT is an upsert keyed by uuid, so re-pushing was harmless but
+	 * re-uploaded the whole library on every click); pass $force to push them
+	 * anyway.
+	 *
 	 * @param string[] $kinds Kinds to sync (block/widget/snippet); empty = all.
-	 * @return array|\WP_Error { pushed, failed, items:[{kind,id,ok,error?}] }.
+	 * @param bool     $force Push even artifacts that are already up to date.
+	 * @return array|\WP_Error { pushed, skipped, failed, items:[{kind,id,ok,skipped?,error?}] }.
 	 */
-	public static function bulk_backup( array $kinds = array() ) {
+	public static function bulk_backup( array $kinds = array(), bool $force = false ) {
 		if ( ! EMCP_Tools_Cloud::is_connected() ) {
 			return self::not_connected();
 		}
 		$map     = self::kind_post_types();
 		$kinds   = empty( $kinds ) ? array_keys( $map ) : array_values( array_intersect( $kinds, array_keys( $map ) ) );
-		$results = array( 'pushed' => 0, 'failed' => 0, 'items' => array() );
+		$results = array( 'pushed' => 0, 'skipped' => 0, 'failed' => 0, 'items' => array() );
 
 		foreach ( $kinds as $kind ) {
 			// Skip a kind whose store isn't available (e.g. block on a free build).
@@ -117,6 +123,11 @@ class EMCP_Tools_Cloud_Sync {
 				)
 			);
 			foreach ( (array) $ids as $id ) {
+				if ( ! $force && self::is_up_to_date( $kind, (int) $id ) ) {
+					$results['skipped']++;
+					$results['items'][] = array( 'kind' => $kind, 'id' => (int) $id, 'ok' => true, 'skipped' => true );
+					continue;
+				}
 				$res = self::backup( $kind, (int) $id );
 				if ( is_wp_error( $res ) ) {
 					$results['failed']++;
@@ -128,6 +139,33 @@ class EMCP_Tools_Cloud_Sync {
 			}
 		}
 		return $results;
+	}
+
+	/**
+	 * Whether a local artifact's content is unchanged since its last cloud push:
+	 * it was pushed before AND the checksum recorded at that push equals the
+	 * current one. A missing baseline (pushed before checksum tracking existed)
+	 * counts as changed, since the content cannot be proven unchanged; the next
+	 * push records a fresh baseline.
+	 *
+	 * @param string $kind Artifact kind.
+	 * @param int    $id   Local artifact id.
+	 * @return bool
+	 */
+	public static function is_up_to_date( string $kind, int $id ): bool {
+		if ( ! get_post_meta( $id, '_emcp_cloud_pushed', true ) ) {
+			return false;
+		}
+		$recorded = (string) get_post_meta( $id, '_emcp_cloud_checksum', true );
+		if ( '' === $recorded ) {
+			return false;
+		}
+		$art = self::abilities()->resolve_artifact( $kind );
+		if ( ! $art ) {
+			return false;
+		}
+		$current = (string) $art->checksum( $id );
+		return '' !== $current && hash_equals( $recorded, $current );
 	}
 
 	/**

@@ -22,6 +22,15 @@ final class EMCP_Tools_Pro_Loader {
 	/** Pro class files, in load order. Relative to the Pro root. */
 	private const FILES = array(
 		'includes/class-sandbox-template-compiler.php',
+		// Runtime, not MCP surface: generated widgets call it on every front-end render.
+		'includes/class-widget-query.php',
+		'includes/class-shortcode-registry.php',
+		'includes/remote/interface-remote-preset.php',
+		'includes/remote/class-remote-source.php',
+		'includes/remote/class-remote-preset-openweather.php',
+		'includes/remote/class-remote-preset-google-reviews.php',
+		'includes/remote/class-remote-preset-yelp.php',
+		'includes/remote/class-remote-preset-json.php',
 		'includes/class-block-store.php',
 		'includes/class-block-loader.php',
 		// Project Memory (Pro).

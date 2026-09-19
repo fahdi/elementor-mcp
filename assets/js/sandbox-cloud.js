@@ -191,8 +191,14 @@
 			post( 'emcp_tools_bulk_backup_artifacts', clusters[ 0 ], null ).then( function ( res ) {
 				if ( res && res.success ) {
 					note.textContent = ( res.data && res.data.message ) || 'Saved to cloud.';
-					// Reload so every row's cloud state reflects the push.
-					setTimeout( function () { window.location.reload(); }, 900 );
+					if ( res.data && res.data.pushed > 0 ) {
+						// Reload so every row's cloud state reflects the push.
+						setTimeout( function () { window.location.reload(); }, 900 );
+					} else {
+						// Nothing changed (all up to date): keep the page, re-enable the buttons.
+						saveAll.disabled = false;
+						btn.disabled = false;
+					}
 				} else {
 					saveAll.disabled = false;
 					btn.disabled = false;

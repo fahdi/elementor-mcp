@@ -823,6 +823,56 @@ SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1</pre>
 					<?php endforeach; ?>
 				</div>
 
+				<?php if ( class_exists( 'EMCP_Tools_Remote_Keys' ) ) : ?>
+				<h3 style="margin:26px 0 6px;"><?php esc_html_e( 'Live data providers', 'emcp-tools' ); ?></h3>
+				<p class="description" style="margin-bottom:12px;"><?php esc_html_e( 'Keys for the Widget Builder\'s remote data source (Weather, Google Reviews, Yelp Reviews, and up to three generic JSON APIs). Stored encrypted; a widget only names the provider, never the key.', 'emcp-tools' ); ?></p>
+				<div class="emcp-services-grid">
+					<?php foreach ( EMCP_Tools_Remote_Keys::providers() as $emcp_rk_slug => $emcp_rk ) :
+						$emcp_rk_option = EMCP_Tools_Remote_Keys::option( $emcp_rk_slug );
+						$emcp_rk_const  = defined( $emcp_rk['const'] );
+						$emcp_rk_saved  = ! $emcp_rk_const && '' !== (string) get_option( $emcp_rk_option, '' );
+						if ( $emcp_rk_const ) {
+							/* translators: %s: PHP constant name. */
+							$emcp_rk_placeholder = sprintf( __( 'Set via the %s constant', 'emcp-tools' ), $emcp_rk['const'] );
+						} elseif ( $emcp_rk_saved ) {
+							$emcp_rk_placeholder = __( '•••••••••••••• saved, leave blank to keep', 'emcp-tools' );
+						} else {
+							$emcp_rk_placeholder = __( 'Paste your API key', 'emcp-tools' );
+						}
+						?>
+						<div class="emcp-service-field">
+							<div class="emcp-service-field-head">
+								<label for="emcp-tools-<?php echo esc_attr( $emcp_rk_option ); ?>">
+									<?php echo esc_html( $emcp_rk['label'] ); ?>
+									<?php if ( $emcp_rk_saved ) : ?><span class="emcp-service-badge"><?php esc_html_e( 'saved', 'emcp-tools' ); ?></span><?php endif; ?>
+								</label>
+								<?php if ( '' !== $emcp_rk['url'] ) : ?>
+									<a href="<?php echo esc_url( $emcp_rk['url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Get a key', 'emcp-tools' ); ?> &rarr;</a>
+								<?php endif; ?>
+							</div>
+							<input
+								type="password"
+								id="emcp-tools-<?php echo esc_attr( $emcp_rk_option ); ?>"
+								name="<?php echo esc_attr( $emcp_rk_option ); ?>"
+								value=""
+								placeholder="<?php echo esc_attr( $emcp_rk_placeholder ); ?>"
+								autocomplete="off"
+								autocapitalize="off"
+								spellcheck="false"
+								<?php disabled( $emcp_rk_const ); ?>
+							/>
+							<p class="description" style="margin:6px 0 0;"><?php echo esc_html( $emcp_rk['hint'] ); ?></p>
+							<?php if ( $emcp_rk_saved ) : ?>
+								<label class="emcp-service-clear">
+									<input type="checkbox" name="<?php echo esc_attr( $emcp_rk_option . '__clear' ); ?>" value="1" />
+									<?php esc_html_e( 'Remove saved key', 'emcp-tools' ); ?>
+								</label>
+							<?php endif; ?>
+						</div>
+					<?php endforeach; ?>
+				</div>
+				<?php endif; ?>
+
 				<?php $emcp_wpcli_const = defined( 'EMCP_TOOLS_WPCLI_COMMAND' ); ?>
 				<div class="emcp-service-field" style="margin-top:22px;padding-top:20px;border-top:1px solid var(--mcp-line,#e5e7eb);">
 					<div class="emcp-service-field-head">

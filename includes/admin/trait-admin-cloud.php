@@ -100,7 +100,8 @@ trait EMCP_Tools_Admin_Cloud_Trait {
 		if ( ! class_exists( 'EMCP_Tools_Cloud_Sync' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Cloud sync is unavailable.', 'emcp-tools' ) ) );
 		}
-		$res = EMCP_Tools_Cloud_Sync::bulk_backup( array( $kind ) );
+		$force = ! empty( $_POST['force'] ) && 'yes' === sanitize_key( wp_unslash( $_POST['force'] ) );
+		$res   = EMCP_Tools_Cloud_Sync::bulk_backup( array( $kind ), $force );
 		if ( is_wp_error( $res ) ) {
 			$msg = ( 'not_connected' === $res->get_error_code() )
 				? __( 'Connect this site to EMCP Cloud first.', 'emcp-tools' )
@@ -109,7 +110,7 @@ trait EMCP_Tools_Admin_Cloud_Trait {
 		}
 		// Mirror the per-artifact post-processing so each pushed row reflects "Saved".
 		foreach ( (array) ( $res['items'] ?? array() ) as $emcp_item ) {
-			if ( empty( $emcp_item['ok'] ) ) {
+			if ( empty( $emcp_item['ok'] ) || ! empty( $emcp_item['skipped'] ) ) {
 				continue;
 			}
 			$emcp_iid = (int) ( $emcp_item['id'] ?? 0 );
@@ -119,10 +120,19 @@ trait EMCP_Tools_Admin_Cloud_Trait {
 				self::refresh_marketplace_state( $kind, $emcp_iid );
 			}
 		}
-		$pushed = (int) ( $res['pushed'] ?? 0 );
-		$failed = (int) ( $res['failed'] ?? 0 );
-		/* translators: %d: number of artifacts saved to the cloud. */
-		$message = sprintf( _n( 'Saved %d item to the cloud.', 'Saved %d items to the cloud.', $pushed, 'emcp-tools' ), $pushed );
+		$pushed  = (int) ( $res['pushed'] ?? 0 );
+		$skipped = (int) ( $res['skipped'] ?? 0 );
+		$failed  = (int) ( $res['failed'] ?? 0 );
+		if ( 0 === $pushed && 0 === $failed && $skipped > 0 ) {
+			$message = __( 'Everything is already up to date in the cloud.', 'emcp-tools' );
+		} else {
+			/* translators: %d: number of artifacts saved to the cloud. */
+			$message = sprintf( _n( 'Saved %d item to the cloud.', 'Saved %d items to the cloud.', $pushed, 'emcp-tools' ), $pushed );
+		}
+		if ( $skipped > 0 && ( $pushed > 0 || $failed > 0 ) ) {
+			/* translators: %d: number of artifacts that were already up to date. */
+			$message .= ' ' . sprintf( _n( '%d already up to date.', '%d already up to date.', $skipped, 'emcp-tools' ), $skipped );
+		}
 		if ( $failed > 0 ) {
 			/* translators: %d: number of artifacts that failed to save. */
 			$message .= ' ' . sprintf( _n( '%d failed.', '%d failed.', $failed, 'emcp-tools' ), $failed );
@@ -130,6 +140,7 @@ trait EMCP_Tools_Admin_Cloud_Trait {
 		wp_send_json_success(
 			array(
 				'pushed'  => $pushed,
+				'skipped' => $skipped,
 				'failed'  => $failed,
 				'message' => $message,
 			)

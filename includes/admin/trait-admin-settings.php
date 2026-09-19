@@ -463,7 +463,13 @@ trait EMCP_Tools_Admin_Settings_Trait {
 		// encrypted at rest (EMCP_Tools_Secret) and never rendered back to the
 		// form: the field posts empty when unchanged (we keep the stored value),
 		// a per-field "__clear" checkbox removes it, and a new value is encrypted.
-		foreach ( array( EMCP_Tools_Unsplash_Client::OPTION, EMCP_Tools_Pexels_Client::OPTION, EMCP_Tools_Pixabay_Client::OPTION ) as $emcp_stock_option ) {
+		// The remote-data provider keys (Weather, Google Reviews, Yelp, generic JSON
+		// slots) share the exact same storage contract.
+		$emcp_service_options = array_merge(
+			array( EMCP_Tools_Unsplash_Client::OPTION, EMCP_Tools_Pexels_Client::OPTION, EMCP_Tools_Pixabay_Client::OPTION ),
+			class_exists( 'EMCP_Tools_Remote_Keys' ) ? EMCP_Tools_Remote_Keys::options() : array()
+		);
+		foreach ( $emcp_service_options as $emcp_stock_option ) {
 			register_setting(
 				self::SETTINGS_GROUP_SERVICES,
 				$emcp_stock_option,

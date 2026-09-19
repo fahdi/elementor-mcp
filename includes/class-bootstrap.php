@@ -151,6 +151,7 @@ class EMCP_Tools_Bootstrap {
 		require_once EMCP_TOOLS_DIR . 'includes/validators/class-settings-validator.php';
 		// Widget catalog — source of truth for the 5 catalog-backed widget tools.
 		require_once EMCP_TOOLS_DIR . 'includes/class-secret.php';
+		require_once EMCP_TOOLS_DIR . 'includes/class-remote-keys.php';
 		require_once EMCP_TOOLS_DIR . 'includes/oauth/class-oauth-util.php';
 		require_once EMCP_TOOLS_DIR . 'includes/cloud/class-cloud.php';
 		require_once EMCP_TOOLS_DIR . 'includes/cloud/class-cloud-http.php';
