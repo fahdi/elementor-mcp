@@ -3,7 +3,7 @@ Contributors: mianshahzadraza
 Tags: elementor, mcp, ai, page-builder, automation
 Requires at least: 6.9
 Tested up to: 7.1
-Stable tag: 3.18.0
+Stable tag: 3.17.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -179,9 +179,9 @@ On shared LiteSpeed hosting (e.g. Hostinger) this is usually the host caching/bu
 
 == Changelog ==
 
-= 3.18.0 =
+= 3.17.0 =
 
-Adds independent page-builder integrations and Gutenberg block packs, expands Widget Builder data controls, and bundles native authoring skills.
+Adds independent page-builder integrations and Gutenberg block packs, expands Widget Builder data controls, bundles native authoring skills, and strengthens History recording and rollback.
 
 * New: Dedicated page-builder integrations. Bricks, Breakdance, Avada, Divi 5, Thrive Architect, Oxygen 6, Kirki, WPBakery, Beaver Builder and Visual Composer join the existing Elementor and BeBuilder workflows. Each has its own tools and sections. Availability follows the installed vendor version and tested scope; optional vendor features may remain read-only or unsupported.
 * New: Page Builders management screen. Choose one standalone builder integration while keeping Gutenberg available. Inactive builder tools stay out of discovery, and new write tools start disabled.
@@ -193,10 +193,6 @@ Adds independent page-builder integrations and Gutenberg block packs, expands Wi
 * Improved: Bundled authoring skills. Builder-specific guidance is available in runtime discovery and both downloadable skill formats, with native editor contracts, test findings and upstream attribution.
 * Fixed: Templates module visibility. The Templates page follows its module toggle even when another builder is selected. The current library remains Elementor-specific. The general Elementor installation notice no longer appears merely because Elementor is absent.
 * Maintenance: Shared agent guidance. AGENTS.md is the single source of project guidance; CLAUDE.md imports it. Native integration probes, MCP smoke fixtures and regression tests accompany the implementation.
-
-= 3.17.0 =
-
-Adds page and upload creation undo, records page settings and CSS, and strengthens History rollback verification.
 
 * Fixed: create-page records one creation event and returns its change_id. Undo removes the created page, including its initial Elementor content.
 * New: upload-media records a creation event and returns its change_id. Undo removes the attachment and verifies deletion of recorded WordPress-managed files, including generated sizes on Windows.

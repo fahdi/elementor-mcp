@@ -1,9 +1,12 @@
-# EMCP Tools 3.18.0 preparation
+# EMCP Tools 3.17.0 preparation
 
 Status: prepared locally. No push, tag, GitHub release, Freemius upload or website deployment is authorized by this preparation task.
 
+3.17.0 has not been published. This release combines the earlier History improvements with all subsequent builder and Widget Builder work.
+
 ## Contents
 
+- History creation undo, page settings and CSS recording, conflict guards and verified rollback restoration.
 - Twelve standalone builder integrations including Elementor and BeBuilder, plus Gutenberg and five independently enabled block packs. Vendor feature coverage and supported versions are integration-specific; refer to each integration guide and bundled skill.
 - Completed Oxygen workflows and added Kirki, WPBakery, Beaver Builder, Visual Composer, Blocksy separation and Otter Free/Pro support.
 - Widget Builder query, shortcode and remote-source data controls, remote-key management, registry synchronization and reserved Elementor control-name validation. Changes made with Claude are retained.
@@ -17,7 +20,7 @@ The preparation runs both PHPUnit suites, Node proxy tests, syntax checks of cha
 
 Pre-build results: 2,888 Pro tests and 12,654 assertions, with six existing skips; 232 public tests and 602 assertions; all 17 proxy tests passed. All 70 changed PHP files passed syntax checks. Manifest review added coverage for three pre-existing Pro-only files: the WooCommerce adapter, FunnelKit adapter and Pro usage client.
 
-Build command: `bash pro/tools/build-release.sh`. Outputs: `releases/emcp-tools-3.18.0.zip` and `releases/emcp-pro-3.18.0.zip`. Local package hashes are recorded in `releases/SHA256SUMS-3.18.0.txt` after verification.
+Build command: `bash pro/tools/build-release.sh`. Outputs: `releases/emcp-tools-3.17.0.zip` and `releases/emcp-pro-3.17.0.zip`. Local package hashes are recorded in `releases/SHA256SUMS-3.17.0.txt` after verification.
 
 ## Scope limits
 

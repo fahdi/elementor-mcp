@@ -153,5 +153,5 @@ scripts/e2e/.beaver-state.json
 /scripts/e2e/visual-composer-*.txt
 scripts/e2e/otter-*.json
 !docs/OTTER-INTEGRATION.md
-!docs/RELEASE-3.18.0.md
+!docs/RELEASE-3.17.0.md
 !docs/qa/

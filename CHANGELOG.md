@@ -2,9 +2,9 @@
 
 All notable changes to MCP Tools for Elementor are documented in this file.
 
-## [3.18.0]
+## [3.17.0]
 
-> Adds independent page-builder integrations and Gutenberg block packs, expands Widget Builder data controls, and bundles native authoring skills.
+> Adds independent page-builder integrations and Gutenberg block packs, expands Widget Builder data controls, bundles native authoring skills, and strengthens History recording and rollback.
 
 - New: **Dedicated page-builder integrations.** Bricks, Breakdance, Avada, Divi 5, Thrive Architect, Oxygen 6, Kirki, WPBakery, Beaver Builder and Visual Composer join the existing Elementor and BeBuilder workflows. Each has its own tools and sections. Availability follows the installed vendor version and tested scope; optional vendor features may remain read-only or unsupported.
 - New: **Page Builders management screen.** Choose one standalone builder integration while keeping Gutenberg available. Inactive builder tools stay out of discovery, and new write tools start disabled.
@@ -16,10 +16,6 @@ All notable changes to MCP Tools for Elementor are documented in this file.
 - Improved: **Bundled authoring skills.** Builder-specific guidance is available in runtime discovery and both downloadable skill formats, with native editor contracts, test findings and upstream attribution.
 - Fixed: **Templates module visibility.** The Templates page follows its module toggle even when another builder is selected. The current library remains Elementor-specific. The general Elementor installation notice no longer appears merely because Elementor is absent.
 - Maintenance: **Shared agent guidance.** AGENTS.md is the single source of project guidance; CLAUDE.md imports it. Native integration probes, MCP smoke fixtures and regression tests accompany the implementation.
-
-## [3.17.0]
-
-> Adds creation undo for Elementor pages and uploads, records page settings and CSS changes, and strengthens History's rollback verification.
 
 - Fixed: **Page creation undo removes the created page.** `create-page` now records one creation event, including initial Elementor content, and returns its `change_id`. Initialization no longer produces an edit-only undo that leaves an empty page behind.
 - New: **Uploaded media is recorded in History.** `upload-media` returns a creation change ID; undo removes the attachment and verifies deletion of its recorded WordPress-managed files. Creation guards protect later page edits, attachment metadata, and changed image bytes. Windows attachment paths are normalized during undo so WordPress also deletes generated image sizes.
