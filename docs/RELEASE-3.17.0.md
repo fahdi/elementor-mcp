@@ -31,3 +31,7 @@ The integration pages were tested on the local test site through fresh MCP proce
 ## Publication handoff
 
 After explicit authorization, push the private Pro commit before the public parent, then perform the established tag, free GitHub ZIP release and premium Freemius upload workflow. Keep Freemius's generated free build unreleased. The normal release-finish social copy and website changelog rebuild occur only as part of that authorized publication workflow.
+
+## Website preparation
+
+The sibling website now includes 15 new builder/block-pack integration pages and tool references, a compatibility guide, theme/block separation, refreshed generated changelog and catalog counts, and a draft 3.17.0 article with a cover. See `website/docs/RELEASE-3.17.0.md` in the companion repository for validation and publication-day steps. Website changes remain local and the article is excluded from production until release approval.
