@@ -1,8 +1,8 @@
 # EMCP Tools 3.17.0 preparation
 
-Status: prepared locally. No push, tag, GitHub release, Freemius upload or website deployment is authorized by this preparation task.
+Status: plugin release published on 2026-09-21 (Asia/Karachi), explicitly authorized by the user.
 
-3.17.0 has not been published. This release combines the earlier History improvements with all subsequent builder and Widget Builder work.
+This release combines the earlier History improvements with all subsequent builder and Widget Builder work.
 
 ## Contents
 
@@ -35,3 +35,13 @@ After explicit authorization, push the private Pro commit before the public pare
 ## Website preparation
 
 The sibling website now includes 15 new builder/block-pack integration pages and tool references, a compatibility guide, theme/block separation, refreshed generated changelog and catalog counts, and a draft 3.17.0 article with a cover. See `website/docs/RELEASE-3.17.0.md` in the companion repository for validation and publication-day steps. Website changes remain local and the article is excluded from production until release approval.
+
+## Publication record
+
+- Public tag `v3.17.0` targets `3c6b78d`, including the Modules, Page Builders, Tools menu order.
+- GitHub release: https://github.com/msrbuilds/elementor-mcp/releases/tag/v3.17.0
+- GitHub asset: `emcp-tools-3.17.0.zip` only.
+- Freemius product 30577, deployment 154381: `release_mode=released`; existing `is_released=false` preserved. Only the verified Pro package was uploaded.
+- Fresh ZIPs passed archive checks and exact menu-source comparison after line-ending normalization. Checksums are in `releases/SHA256SUMS-3.17.0.txt`.
+- Facebook launch post and banner copy: `docs/releases/social-post-3.17.0.md`, with a session-memory copy in `.remember/`. Social copy is prepared, not posted.
+- Website release article and cover were converted from preview wording. Astro check passed on 414 files with zero errors, warnings or hints; production build passed.
