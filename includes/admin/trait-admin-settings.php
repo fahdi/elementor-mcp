@@ -292,13 +292,25 @@ trait EMCP_Tools_Admin_Settings_Trait {
 		}
 		if ( $applied < 43 ) {
 			foreach ( EMCP_Tools_Page_Builders::block_packs() as $id => $pack ) {
+				if (!empty($pack['native_tools'])) { continue; }
 				foreach ( (new EMCP_Tools_Block_Pack_Integration($id))->definitions() as $slug => $definition ) {
 					if ($definition[1]) { $add[] = 'emcp-tools/'.$id.'-'.$slug; }
 				}
 			}
 		}
+		if ($applied < 50) {
+			foreach (array('add-block','update-block','move-block','remove-block') as $slug) { $add[]='emcp-tools/blocksy-blocks-'.$slug; }
+			$add[]='emcp-tools/blocksy-theme-write';
+			$add[]='emcp-tools/blocksy-content-write';
+		}
+		if ($applied < 49) { foreach (array('create-page','set-page-layout','add-node','update-node','move-node','remove-node','set-page-styles','save-template','apply-template','restore-revision','publish-page') as $slug) { $add[]='emcp-tools/beaver-'.$slug; } }
+		if ($applied < 48) { foreach (array('create-page','set-page-content','replace-fragment','set-page-styles','apply-template','restore-revision','publish-page') as $slug) { $add[]='emcp-tools/wpbakery-'.$slug; } }
+		if ($applied < 47) { foreach (array('create-page','set-page-content','add-element','update-element','set-page-styles','publish-page','restore-version','set-page-canvas') as $slug) { $add[]='emcp-tools/kirki-'.$slug; } }
+		if ($applied < 46) { foreach (array('restore-revision','define-component-property','save-design-state','restore-design-revision','manage-document','set-native-document','configure-design-library','import-design-library') as $slug) { $add[]='emcp-tools/oxygen-'.$slug; } }
 		if ($applied < 45) { foreach (array('create-template','update-template-settings','copy-library-item','insert-component') as $slug) { $add[]='emcp-tools/oxygen-'.$slug; } }
 		if ($applied < 44) { foreach (array('create-page','set-page-tree','add-element','update-element','move-element','remove-element','save-class') as $slug) { $add[]='emcp-tools/oxygen-'.$slug; } }
+		if ($applied < 51) { foreach (array('create-page','stage-document','apply-template','restore-revision','discard-draft','publish-page') as $slug) { $add[]='emcp-tools/visual-composer-'.$slug; } }
+		if ($applied < 52) { foreach (array('create-page','set-page-blocks','publish-page','add-block','update-block','move-block','remove-block','insert-pattern','rebuild-page-styles','update-settings') as $slug) { $add[]='emcp-tools/otter-'.$slug; } }
 		$merged = array_values( array_unique( array_merge( $existing, $add ) ) );
 		update_option( self::OPTION_DISABLED_TOOLS, $merged );
 		update_option( self::OPTION_DEFAULTS_APPLIED, (string) self::DEFAULTS_VERSION );

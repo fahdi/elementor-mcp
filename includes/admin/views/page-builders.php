@@ -41,7 +41,7 @@ $selected = EMCP_Tools_Page_Builders::selected();
 			<?php endforeach; ?>
 		</div>
 		<h3><?php esc_html_e('Gutenberg Block Plugins', 'emcp-tools'); ?></h3>
-		<p class="description"><?php esc_html_e('Enable any combination. Each block plugin has its own tools tab and works independently of your theme and standalone builder selection.', 'emcp-tools'); ?></p>
+		<p class="description"><?php esc_html_e('Enable any combination. Each block plugin has its own tools tab and works alongside the selected standalone builder. Blocksy Blocks also requires its native Blocksy theme and Companion plugin.', 'emcp-tools'); ?></p>
 		<input type="hidden" name="<?php echo esc_attr(EMCP_Tools_Page_Builders::BLOCK_PACK_OPTION); ?>[]" value="" />
 		<div class="elementor-mcp-tools-grid emcp-modules-grid">
 		<?php foreach (EMCP_Tools_Page_Builders::block_packs() as $id=>$pack) : ?>
@@ -52,7 +52,7 @@ $selected = EMCP_Tools_Page_Builders::selected();
 					<span class="elementor-mcp-toggle" aria-hidden="true"><span class="elementor-mcp-toggle-track"></span></span>
 					<span class="elementor-mcp-tool-info"><span class="elementor-mcp-tool-name"><?php echo esc_html($pack['label']); ?></span><span class="elementor-mcp-tool-desc"><?php esc_html_e('Native blocks, schemas and page editing alongside Gutenberg.', 'emcp-tools'); ?></span></span>
 				</label>
-				<?php if(!$available) : ?><p class="emcp-module-unavailable"><?php echo esc_html('Requires the active '.$pack['label'].' plugin'.($id==='generateblocks'?' and EMCP Pro':'').'.'); ?></p><?php endif; ?>
+				<?php if(!$available) : ?><p class="emcp-module-unavailable"><?php echo esc_html($pack['requirement']??('Requires the active '.$pack['label'].' plugin'.($id==='generateblocks'?' and EMCP Pro':'').'.')); ?></p><?php endif; ?>
 			</div>
 		<?php endforeach; ?>
 		</div>

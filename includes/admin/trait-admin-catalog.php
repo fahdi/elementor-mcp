@@ -2108,6 +2108,10 @@ trait EMCP_Tools_Admin_Catalog_Trait {
 		if ( class_exists( 'EMCP_Tools_Bricks_Integration' ) ) {
 			$tools = array_merge( $tools, EMCP_Tools_Bricks_Integration::admin_categories() );
 		}
+		if (class_exists('EMCP_Tools_Beaver_Integration')) { $tools=array_merge($tools,EMCP_Tools_Beaver_Integration::admin_categories()); }
+		if (class_exists('EMCP_Tools_Visual_Composer_Integration')) { $tools=array_merge($tools,EMCP_Tools_Visual_Composer_Integration::admin_categories()); }
+		if (class_exists('EMCP_Tools_WPBakery_Integration')) { $tools=array_merge($tools,EMCP_Tools_WPBakery_Integration::admin_categories()); }
+		if (class_exists('EMCP_Tools_Kirki_Integration')) { $tools=array_merge($tools,EMCP_Tools_Kirki_Integration::admin_categories()); }
 		if (class_exists('EMCP_Tools_Oxygen_Integration')) { $tools=array_merge($tools,EMCP_Tools_Oxygen_Integration::admin_categories()); }
 		if ( class_exists( 'EMCP_Tools_Breakdance_Integration' ) ) {
 			$tools = array_merge( $tools, EMCP_Tools_Breakdance_Integration::admin_categories() );
@@ -2131,6 +2135,19 @@ trait EMCP_Tools_Admin_Catalog_Trait {
 				if(isset($tools[$category]['tools'][$slug])) { $compat[$slug]=$tools[$category]['tools'][$slug]; unset($tools[$category]['tools'][$slug]); }
 			}
 			$tools[$id.'_compatibility']=array('platform'=>$id,'label'=>'Compatibility','note'=>'Existing dispatcher names remain supported. Use individual tools for new workflows.','pro'=>$id==='generateblocks','tools'=>$compat);
+		}
+		// Preserve existing tool names and choices while separating their owners.
+		$blocksy_legacy=$tools['theme_blocksy']['tools'];
+		$tools['blocksy-blocks_compatibility']=array('platform'=>'blocksy-blocks','label'=>__('Compatibility','emcp-tools'),'pro'=>true,'tools'=>array_intersect_key($blocksy_legacy,array_flip(array('emcp-tools/blocksy-blocks-read','emcp-tools/blocksy-blocks-write'))));
+		$tools['blocksy_companion_extensions']=array('platform'=>'plugins','group'=>'other','label'=>__('Blocksy Companion: Extensions','emcp-tools'),'pro'=>true,'tools'=>array_intersect_key($blocksy_legacy,array_flip(array('emcp-tools/blocksy-extensions-read','emcp-tools/blocksy-extensions-write'))));
+		unset($tools['theme_blocksy']);
+		foreach(array(
+			'blocksy-theme'=>array('themes','Blocksy Theme','EMCP_Tools_Blocksy_Theme_Integration',array('get-context','get-settings','get-design-settings'),array('update-settings')),
+			'blocksy-content'=>array('plugins','Blocksy Companion: Content Blocks','EMCP_Tools_Blocksy_Content_Integration',array('get-context','list-content-blocks','get-content-block','list-hooks'),array('create-content-block','update-content-block','publish-content-block','unpublish-content-block')),
+		) as $id=>$spec) {
+			$entries=array();
+			foreach(array('read','write') as $mode) { $entries['emcp-tools/'.$id.'-'.$mode]=array('label'=>$spec[1].' '.ucfirst($mode),'description'=>$id==='blocksy-theme'?__('Native theme layout settings and read-only design configuration.','emcp-tools'):__('Native Pro templates, hooks and popups. Create disabled drafts, edit content and explicitly publish.','emcp-tools'),'operations'=>$spec[$mode==='read'?3:4],'badges'=>$mode==='read'?array('read-only','pro'):array('pro'),'available'=>class_exists($spec[2]) && (new $spec[2]())->is_available(),'requires'=>array('name'=>$id==='blocksy-theme'?'Blocksy':'Blocksy Companion Pro','kind'=>$id==='blocksy-theme'?'theme':'plugin')); }
+			$tools[$id]=array('platform'=>$spec[0],'group'=>'other','label'=>$spec[1],'pro'=>true,'tools'=>$entries);
 		}
 		$tools=array_merge($tools,EMCP_Tools_Block_Pack_Integration::admin_categories());
 		$tools['spectra_discovery']['notice']=self::spectra_file_generation_notice();

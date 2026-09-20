@@ -74,7 +74,7 @@ class EMCP_Tools_Block_Pack_Integration {
     public function execute(string $slug,array $args) {
         if(!$this->allowed($args)) { return new WP_Error('block_pack_forbidden','Block integration or post permission unavailable.'); }
         $defs=$this->definitions(); if(!isset($defs[$slug])) { return new WP_Error('unknown_tool','Unknown block integration tool.'); }
-        if($slug==='get-context') { return array('integration'=>$this->id,'site_url'=>home_url(),'editor'=>'gutenberg','theme_required'=>false,'independent_toggle'=>true,'tools'=>$this->get_ability_names()); }
+        if($slug==='get-context') { return array('integration'=>$this->id,'site_url'=>home_url(),'editor'=>'gutenberg','theme_required'=>$this->id==='blocksy-blocks','independent_toggle'=>true,'tools'=>$this->get_ability_names()); }
         if($slug==='get-post-blocks') { return $this->page((int)$args['post_id']); }
         if(!$defs[$slug][1]) { return $this->adapter->run_read(array('operation'=>$slug,'arguments'=>$args)); }
         $id=(int)($args['post_id']??0);
@@ -92,7 +92,7 @@ class EMCP_Tools_Block_Pack_Integration {
             }
             $tree=EMCP_Tools_Block_Tree::from_markup($post->post_content);
             $path=$args['path']; $node=EMCP_Tools_Block_Tree::at($tree,$path);
-            $namespace=array('spectra'=>'uagb/','kadence-blocks'=>'kadence/','generateblocks'=>'generateblocks/')[$this->id];
+            $namespace=array('blocksy-blocks'=>'blocksy/','spectra'=>'uagb/','kadence-blocks'=>'kadence/','generateblocks'=>'generateblocks/')[$this->id];
             if(!$node || strpos((string)$node['blockName'],$namespace)!==0) { return new WP_Error('wrong_block','Choose a block belonging to this integration.'); }
             if($slug==='remove-block') { $tree=EMCP_Tools_Block_Tree::remove($tree,$path); }
             elseif($slug==='move-block') {
@@ -112,10 +112,14 @@ class EMCP_Tools_Block_Pack_Integration {
     public static function admin_categories(): array {
         $out=array();
         foreach(EMCP_Tools_Page_Builders::block_packs() as $id=>$pack) {
+            if(!empty($pack['native_tools'])) {
+                if(class_exists($pack['class'])) { $out=array_merge($out,$pack['class']::admin_categories()); }
+                continue;
+            }
             $api=new self($id);
             foreach($api->definitions() as $slug=>$d) {
                 $key=$id.'_'.strtolower($d[0]);
-                if(!isset($out[$key])) { $out[$key]=array('platform'=>$id,'label'=>$pack['label'].': '.$d[0],'pro'=>$id==='generateblocks','tools'=>array()); }
+                if(!isset($out[$key])) { $out[$key]=array('platform'=>$id,'label'=>$pack['label'].': '.$d[0],'pro'=>in_array($id,array('generateblocks','blocksy-blocks'),true),'tools'=>array()); }
                 $out[$key]['tools']['emcp-tools/'.$id.'-'.$slug]=array('label'=>ucwords(str_replace('-',' ',$slug)),'description'=>$d[2],'badges'=>$d[1]?array():array('read-only'),'available'=>EMCP_Tools_Page_Builders::available($id),'requires'=>array('name'=>$pack['label'],'kind'=>'plugin'));
             }
         }

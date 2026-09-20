@@ -361,6 +361,29 @@ class EMCP_Tools_Ability_Registrar {
 			$this->ability_names = array_merge( $this->ability_names, $avada->get_ability_names() );
 		}
 
+		if ( EMCP_Tools_Page_Builders::enabled( 'beaver' ) ) {
+			$beaver = new EMCP_Tools_Beaver_Integration();
+			EMCP_Tools_Page_Builders::$registering = 'beaver';
+			try { $beaver->register(); } finally { EMCP_Tools_Page_Builders::$registering = ''; }
+			$this->ability_names = array_merge( $this->ability_names, $beaver->get_ability_names() );
+		}
+
+
+		if ( EMCP_Tools_Page_Builders::enabled( 'wpbakery' ) ) {
+			$wpbakery = new EMCP_Tools_WPBakery_Integration();
+			EMCP_Tools_Page_Builders::$registering = 'wpbakery';
+			try { $wpbakery->register(); } finally { EMCP_Tools_Page_Builders::$registering = ''; }
+			$this->ability_names = array_merge( $this->ability_names, $wpbakery->get_ability_names() );
+		}
+
+
+		if ( EMCP_Tools_Page_Builders::enabled( 'kirki' ) ) {
+			$kirki = new EMCP_Tools_Kirki_Integration();
+			EMCP_Tools_Page_Builders::$registering = 'kirki';
+			try { $kirki->register(); } finally { EMCP_Tools_Page_Builders::$registering = ''; }
+			$this->ability_names = array_merge( $this->ability_names, $kirki->get_ability_names() );
+		}
+
 		if ( EMCP_Tools_Page_Builders::enabled( 'oxygen' ) ) {
 			$oxygen = new EMCP_Tools_Oxygen_Integration();
 			EMCP_Tools_Page_Builders::$registering = 'oxygen';
@@ -385,7 +408,7 @@ class EMCP_Tools_Ability_Registrar {
 		// Independently enabled Gutenberg extension integrations.
 		foreach ( EMCP_Tools_Page_Builders::block_packs() as $pack_id => $pack ) {
 			if ( EMCP_Tools_Page_Builders::enabled( $pack_id ) ) {
-				$integration = new EMCP_Tools_Block_Pack_Integration( $pack_id );
+				$integration = !empty($pack['native_tools']) ? new $pack['class']() : new EMCP_Tools_Block_Pack_Integration( $pack_id );
 				$integration->register();
 				$this->ability_names = array_merge( $this->ability_names, $integration->get_ability_names() );
 			}
@@ -412,9 +435,18 @@ class EMCP_Tools_Ability_Registrar {
 		if ( class_exists( 'EMCP_Tools_BeTheme_Integration' ) ) {
 			$theme_integrations[] = new EMCP_Tools_BeTheme_Integration();
 		}
-		// Blocksy (Pro): blocks + Companion extensions.
-		if ( class_exists( 'EMCP_Tools_Blocksy_Blocks_Integration' ) ) {
-			$theme_integrations[] = new EMCP_Tools_Blocksy_Blocks_Integration();
+		// Blocksy blocks register independently above; theme and Companion have separate tools.
+		if ( class_exists( 'EMCP_Tools_Blocksy_Theme_Integration' ) ) {
+			$theme_integrations[] = new EMCP_Tools_Blocksy_Theme_Integration();
+		}
+		if ( EMCP_Tools_Page_Builders::enabled( 'visual-composer' ) ) {
+			$visual_composer = new EMCP_Tools_Visual_Composer_Integration();
+			EMCP_Tools_Page_Builders::$registering = 'visual-composer';
+			try { $visual_composer->register(); } finally { EMCP_Tools_Page_Builders::$registering = ''; }
+			$this->ability_names = array_merge( $this->ability_names, $visual_composer->get_ability_names() );
+		}
+		if ( class_exists( 'EMCP_Tools_Blocksy_Content_Integration' ) ) {
+			$theme_integrations[] = new EMCP_Tools_Blocksy_Content_Integration();
 		}
 		if ( class_exists( 'EMCP_Tools_Blocksy_Extensions_Integration' ) ) {
 			$theme_integrations[] = new EMCP_Tools_Blocksy_Extensions_Integration();

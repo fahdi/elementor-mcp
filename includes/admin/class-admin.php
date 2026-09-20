@@ -119,7 +119,8 @@ class EMCP_Tools_Admin {
 	 * @return bool
 	 */
 	private function module_tab_visible( string $module_id ): bool {
-		if ( in_array( $module_id, array( 'templates', 'brand-kits' ), true ) && ! EMCP_Tools_Page_Builders::enabled( 'elementor' ) ) {
+		// The Templates library remains browsable independently of builder selection.
+		if ( 'brand-kits' === $module_id && ! EMCP_Tools_Page_Builders::enabled( 'elementor' ) ) {
 			return false;
 		}
 		if ( ! class_exists( 'EMCP_Tools_Modules_Registry' ) ) {
@@ -458,7 +459,7 @@ class EMCP_Tools_Admin {
 	 *
 	 * @since 1.8.0
 	 */
-	const DEFAULTS_VERSION = 45;
+	const DEFAULTS_VERSION = 52;
 
 	/**
 	 * Themer PHP-template tool slugs. The whole feature is gated behind a master

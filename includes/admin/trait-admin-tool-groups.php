@@ -359,6 +359,10 @@ trait EMCP_Tools_Admin_Tool_Groups_Trait {
 			'emcp-tools/betheme-write',
 			'emcp-tools/blocksy-extensions-read',
 			'emcp-tools/blocksy-extensions-write',
+			'emcp-tools/blocksy-theme-read',
+			'emcp-tools/blocksy-theme-write',
+			'emcp-tools/blocksy-content-read',
+			'emcp-tools/blocksy-content-write',
 		);
 	}
 

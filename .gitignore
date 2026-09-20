@@ -88,6 +88,7 @@ skills/*
 !/docs/DIVI-INTEGRATION.md
 !/docs/THRIVE-INTEGRATION.md
 !/docs/OXYGEN-INTEGRATION.md
+!/docs/KIRKI-INTEGRATION.md
 !/docs/GSAP-INTEGRATION.md
 .commandcode/
 
@@ -133,3 +134,24 @@ freemius.env
 # exploits for released versions, so they must never reach the public repo.
 SECURITY-REMEDIATION-*.md
 PRODUCTION-SECURITY-HANDOVER-*.md
+
+# Local Oxygen MCP verification artifacts
+/.oxygen-*.json
+/scripts/e2e/.oxygen-*.json
+/scripts/e2e/__pycache__/
+/scripts/e2e/.kirki-state.json
+
+!docs/WPBAKERY-INTEGRATION.md
+scripts/e2e/.wpbakery-state.json
+
+!docs/BEAVER-INTEGRATION.md
+scripts/e2e/.beaver-state.json
+
+!docs/BLOCKSY-INTEGRATION.md
+!docs/VISUAL-COMPOSER-INTEGRATION.md
+/scripts/e2e/visual-composer-*.json
+/scripts/e2e/visual-composer-*.txt
+scripts/e2e/otter-*.json
+!docs/OTTER-INTEGRATION.md
+!docs/RELEASE-3.18.0.md
+!docs/qa/

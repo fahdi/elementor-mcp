@@ -110,8 +110,26 @@ includes/divi/class-divi-theme-builder.php
 includes/abilities/class-divi-integration.php
 includes/abilities/class-avada-integration.php
 
+includes/oxygen/class-oxygen-conditions.php
+includes/oxygen/class-oxygen-design.php
+includes/oxygen/class-oxygen-library.php
+includes/oxygen/trait-oxygen-library.php
 includes/oxygen/class-oxygen-tree.php
 includes/oxygen/class-oxygen-styles.php
 includes/abilities/class-oxygen-integration.php
+includes/kirki/class-kirki-document.php
+includes/abilities/class-kirki-integration.php
 
+includes/wpbakery/class-wpbakery-document.php
+includes/abilities/class-wpbakery-integration.php
 
+includes/beaver/class-beaver-document.php
+includes/abilities/class-beaver-integration.php
+
+includes/abilities/class-blocksy-theme-integration.php
+includes/abilities/class-blocksy-content-integration.php
+includes/abilities/class-visual-composer-integration.php
+includes/abilities/class-otter-integration.php
+includes/abilities/class-funnelkit-integration.php
+includes/abilities/class-woo-integration.php
+includes/admin/class-pro-usage.php

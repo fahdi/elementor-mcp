@@ -16,6 +16,8 @@ class EMCP_Tools_Page_Builders {
 
 	public static function block_packs(): array {
 		return array(
+			'otter' => array('label'=>'Otter Blocks', 'class'=>'EMCP_Tools_Otter_Integration', 'native_tools'=>true, 'requirement'=>__('Requires Otter Blocks 3.2.5–3.2.x and EMCP Pro. Otter Pro is optional.','emcp-tools')),
+			'blocksy-blocks' => array('label'=>'Blocksy Blocks', 'class'=>'EMCP_Tools_Blocksy_Blocks_Integration', 'requirement'=>__('Requires the Blocksy theme, Blocksy Companion and EMCP Pro.','emcp-tools')),
 			'spectra' => array('label'=>'Spectra', 'class'=>'EMCP_Tools_Spectra_Integration'),
 			'kadence-blocks' => array('label'=>'Kadence Blocks', 'class'=>'EMCP_Tools_Kadence_Blocks_Integration'),
 			'generateblocks' => array('label'=>'GenerateBlocks', 'class'=>'EMCP_Tools_GenerateBlocks_Integration'),
@@ -33,6 +35,10 @@ class EMCP_Tools_Page_Builders {
 	/** Implemented standalone integrations. Block packs belong to Gutenberg. */
 	public static function catalog(): array {
 		return array(
+			'visual-composer' => array('label'=>__('Visual Composer','emcp-tools'),'description'=>__('Native documents, element schemas, staged HTML/CSS, local library and recovery.','emcp-tools'),'requirement'=>__('Requires active Visual Composer 45.16.2–45.16.x and EMCP Pro.','emcp-tools')),
+			'beaver' => array('label'=>__('Beaver Builder','emcp-tools'),'description'=>__('Native staged layouts, module schemas, responsive styles, saved library and recovery.','emcp-tools'),'requirement'=>__('Requires active Beaver Builder 2.11.1–2.11.x and EMCP Pro.','emcp-tools')),
+			'wpbakery' => array('label'=>__('WPBakery','emcp-tools'),'description'=>__('Native shortcode layouts, element schemas, page CSS, templates and recovery.','emcp-tools'),'requirement'=>__('Requires active WPBakery 9.0.1–9.0.x and EMCP Pro.','emcp-tools')),
+			'kirki' => array('label'=>__('Kirki','emcp-tools'),'description'=>__('Native canvas pages, responsive styles, staged versions, local library and CMS discovery.','emcp-tools'),'requirement'=>__('Requires active Kirki 6.3.1–6.3.x and EMCP Pro.','emcp-tools')),
 			'oxygen' => array('label'=>__('Oxygen','emcp-tools'),'description'=>__('Native Oxygen 6 pages, elements, responsive classes, components and design-system discovery.','emcp-tools'),'requirement'=>__('Requires active Oxygen 6.1.3–6.1.x and EMCP Pro.','emcp-tools')),
 			'thrive' => array('label' => __( 'Thrive Architect', 'emcp-tools' ), 'description' => __( 'Native Architect pages, element controls, HTML and CSS editing, and local library discovery.', 'emcp-tools' ), 'requirement' => __( 'Requires Thrive Architect 11.0.x and EMCP Pro.', 'emcp-tools' )),
 			'divi' => array('label' => __( 'Divi', 'emcp-tools' ), 'description' => __( 'Divi 5 pages, modules, library layouts, Theme Builder assignments and theme options.', 'emcp-tools' ), 'requirement' => __( 'Requires active Divi 5.13.x and EMCP Pro.', 'emcp-tools' )),
@@ -61,10 +67,14 @@ class EMCP_Tools_Page_Builders {
 	}
 
 	public static function available( string $id ): bool {
+		if ('visual-composer' === $id) { return function_exists('emcp_tools_fs') && emcp_tools_fs()->can_use_premium_code() && class_exists('EMCP_Tools_Visual_Composer_Integration') && EMCP_Tools_Visual_Composer_Integration::supported(); }
 		if (isset(self::block_packs()[$id])) {
 			$class=self::block_packs()[$id]['class'];
 			return class_exists($class) && (new $class())->is_available();
 		}
+		if ('beaver' === $id) { return function_exists('emcp_tools_fs') && emcp_tools_fs()->can_use_premium_code() && class_exists('EMCP_Tools_Beaver_Integration') && EMCP_Tools_Beaver_Integration::supported(); }
+		if ('wpbakery' === $id) { return function_exists('emcp_tools_fs') && emcp_tools_fs()->can_use_premium_code() && class_exists('EMCP_Tools_WPBakery_Integration') && EMCP_Tools_WPBakery_Integration::supported(); }
+		if ('kirki' === $id) { return function_exists('emcp_tools_fs') && emcp_tools_fs()->can_use_premium_code() && class_exists('EMCP_Tools_Kirki_Integration') && EMCP_Tools_Kirki_Integration::supported(); }
 		if ('oxygen' === $id) { return function_exists('emcp_tools_fs') && emcp_tools_fs()->can_use_premium_code() && class_exists('EMCP_Tools_Oxygen_Integration') && EMCP_Tools_Oxygen_Integration::supported(); }
 		if ( 'thrive' === $id ) { return function_exists( 'emcp_tools_fs' ) && emcp_tools_fs()->can_use_premium_code() && class_exists( 'EMCP_Tools_Thrive_Integration' ) && EMCP_Tools_Thrive_Integration::supported(); }
 		if ( 'divi' === $id ) { return function_exists( 'emcp_tools_fs' ) && emcp_tools_fs()->can_use_premium_code() && class_exists( 'EMCP_Tools_Divi_Integration' ) && EMCP_Tools_Divi_Integration::supported(); }
@@ -97,7 +107,7 @@ class EMCP_Tools_Page_Builders {
 		if ( null !== $saved ) {
 			return is_string( $saved ) && isset( self::catalog()[ $saved ] ) ? $saved : '';
 		}
-		foreach ( array( 'elementor', 'bebuilder', 'bricks', 'breakdance', 'avada', 'divi', 'thrive', 'oxygen' ) as $id ) {
+		foreach ( array( 'elementor', 'bebuilder', 'bricks', 'breakdance', 'avada', 'divi', 'thrive', 'oxygen', 'kirki', 'wpbakery', 'beaver' ) as $id ) {
 			if ( self::available( $id ) ) {
 				return $id;
 			}

@@ -3,7 +3,7 @@ Contributors: mianshahzadraza
 Tags: elementor, mcp, ai, page-builder, automation
 Requires at least: 6.9
 Tested up to: 7.1
-Stable tag: 3.17.0
+Stable tag: 3.18.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -178,6 +178,21 @@ On shared LiteSpeed hosting (e.g. Hostinger) this is usually the host caching/bu
 2. Connection configuration page with copy-paste configs.
 
 == Changelog ==
+
+= 3.18.0 =
+
+Adds independent page-builder integrations and Gutenberg block packs, expands Widget Builder data controls, and bundles native authoring skills.
+
+* New: Dedicated page-builder integrations. Bricks, Breakdance, Avada, Divi 5, Thrive Architect, Oxygen 6, Kirki, WPBakery, Beaver Builder and Visual Composer join the existing Elementor and BeBuilder workflows. Each has its own tools and sections. Availability follows the installed vendor version and tested scope; optional vendor features may remain read-only or unsupported.
+* New: Page Builders management screen. Choose one standalone builder integration while keeping Gutenberg available. Inactive builder tools stay out of discovery, and new write tools start disabled.
+* Improved: Independent Gutenberg block packs. Spectra, Kadence Blocks, GenerateBlocks, Blocksy Blocks and Otter Blocks have independent toggles and dedicated tools. Theme settings remain in Themes; Blocksy Companion extensions and Pro Content Blocks have separate plugin tools.
+* New: Otter Free and Pro support. Adds 19 tools for native block discovery and editing, local patterns, generated page styles and allowlisted feature settings. Verified with 45 registered blocks in Free and 63 with Pro. Static blocks retain native Gutenberg markup.
+* Improved: Oxygen integration coverage. Adds native library, template, component and design-system workflows, version-aware schemas, conditional data handling and recovery checks. The bundled skill and integration guide document tested write boundaries.
+* New: Widget Builder data controls. Queries can supply posts, products, terms, menus, site data, breadcrumbs, carts and remote JSON. Allowlisted shortcode providers support saved Elementor templates and form plugins. Live data keys have a dedicated Connection section and remain outside cloud settings sync.
+* Fixed: Widget control collisions. Reserved Elementor setting names are rejected so a custom control cannot accidentally hide a widget through entrance-animation settings. Structured control defaults and live registry synchronization improve generated widget behavior.
+* Improved: Bundled authoring skills. Builder-specific guidance is available in runtime discovery and both downloadable skill formats, with native editor contracts, test findings and upstream attribution.
+* Fixed: Templates module visibility. The Templates page follows its module toggle even when another builder is selected. The current library remains Elementor-specific. The general Elementor installation notice no longer appears merely because Elementor is absent.
+* Maintenance: Shared agent guidance. AGENTS.md is the single source of project guidance; CLAUDE.md imports it. Native integration probes, MCP smoke fixtures and regression tests accompany the implementation.
 
 = 3.17.0 =
 

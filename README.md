@@ -28,7 +28,7 @@ EMCP Tools is a WordPress plugin that exposes your site as **[MCP](https://model
 
 ## What it does
 
-**Build pages.** The full Elementor workflow, containers, widgets, templates, global styles, and atomic elements for Elementor 4.0+. Also Gutenberg blocks, and a builder-agnostic theme builder for headers, footers, and archives.
+**Build pages.** Dedicated integrations cover Elementor, Bricks, Breakdance, Avada, Divi 5, Thrive Architect, Oxygen, Kirki, WPBakery, Beaver Builder, BeBuilder and Visual Composer. Select one standalone builder while Gutenberg stays available. Spectra, Kadence Blocks, GenerateBlocks, Blocksy Blocks and Otter Blocks have independent toggles. Pro adapters expose native features verified for supported vendor versions; see each bundled skill for scope and limitations.
 
 **Run the site.** Content and taxonomies, media, users, settings, plugins and themes, nav menus, the filesystem, and the database, all over MCP.
 

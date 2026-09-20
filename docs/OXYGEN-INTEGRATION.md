@@ -6,10 +6,10 @@ Target the installed Oxygen **6.1.3** on both local sites. Gate the adapter to
 Oxygen mode and 6.1.3–6.1.x, excluding Oxygen Classic and Breakdance mode.
 
 1. Verify native tree, storage keys, permissions, save/cache APIs and styles.
-2. Register standalone Oxygen selection, dedicated tab, four sections and 15 tools.
+2. Register standalone Oxygen selection, dedicated tab, 11 sections and 38 tools.
 3. Provide native page CRUD, element schemas, templates/components discovery,
-   design-system reads, supported class-style schema and single-class save.
-4. Keep seven write tools disabled on upgrade; preserve prior tool choices and
+   design-system reads/writes, advanced authoring and dependency-aware library transfers.
+4. Keep new write tools disabled on upgrade; preserve prior tool choices and
    independent Gutenberg block-pack toggles.
 5. Bundle a self-contained guide for injection and both download formats.
 6. Test validation/permissions/defaults and native editor/frontend. Test pages
@@ -29,55 +29,61 @@ Oxygen mode and 6.1.3–6.1.x, excluding Oxygen Classic and Breakdance mode.
 - Native editor races after the hash check cannot be eliminated by EMCP locks;
   existing WordPress editor locks are honored for page writes.
 
-## Coverage audit — September 17, 2026
+## Coverage — September 20, 2026
 
-The original 15-tool release was a page-building foundation, not complete
-Oxygen coverage. The extension now has **21 tools across seven sections**.
-Official documentation reviewed: documentation index, Creating Templates,
-Components, Design Library and Creating Design Sets. Installed 6.1.3 source is
-the authority for actual native storage, registration and save behavior.
+The adapter provides **38 tools across 11 sections**, gated to the installed
+Oxygen 6.1.3–6.1.x native APIs. Gutenberg and independently enabled block packs
+remain available beside the selected standalone Oxygen integration.
 
-| Area | Implemented | Remaining work |
-|---|---|---|
-| Pages and elements | Native CRUD, schemas, hashes, revisions, caches | Specialized elements and nesting |
-| Template library | List/read/create and copy, tree editing | Rename/trash/restore, inheritance/content-area workflows |
-| Headers and footers | Create/edit/copy, location/priority/disabled | Per-page condition authoring and frontend matching tests |
-| Template conditions | Existing settings read and preserved | Typed condition discovery, value lookup, rule-group authoring |
-| Components | Create/read/edit master, insert default native instance | Property definitions/overrides, child visibility, nesting |
-| Design Library | Registered set/settings discovery, local copies | Remote browsing/import, dependency remapping, full-site import |
-| Design Set publishing | Sharing flags read without passwords | Export/sharing configuration and password management |
-| Classes | Core responsive class save and native schema | Nested selectors, pseudo states, complete effects/control coverage |
-| Variables and globals | Read | Validated writes, collections and global import workflows |
-| Dynamic data and queries | Native element discovery | Bindings, conditions, loops, pagination and filters |
-| Interactions | Native discovery only | Actions, triggers, animations and responsive behavior |
-| Optional extensions | Native registered-element discovery | Breakdance Elements/Forms extension-specific authoring |
-| Settings | Version/access/breakpoint discovery | Custom fonts/breakpoints, preferences and settings writes |
-| Revisions | Prior revisions on supported writes | Explicit list/restore tools and global restore workflows |
-| Developer features | Native schema discovery | Code elements, Element Studio and custom integrations |
+| Area | Implementation |
+|---|---|
+| Pages/elements | Native tree CRUD, registered schemas, hashes, locks, revisions and caches |
+| Templates/headers/footers | Create/copy/edit, location, priority, disable, condition groups and inheritance |
+| Conditions | Registered catalog, supported operands/contexts and searchable native values |
+| Components | Master editing, exposed properties, instance overrides, nested references and cycle checks |
+| Design Library | Provider settings, bounded safe-HTTP browsing, native design export/import and dependency remapping |
+| Document lifecycle | Rename, trash and restore |
+| Global design | Variables, selectors (including children/pseudo states), collections, preferences and extension global settings |
+| Revisions | Native tree list/restore, EMCP template-settings snapshots, complete global-document restore |
+| Dynamic/interactions | Native field/action/trigger discovery and advanced tree authoring |
+| Advanced elements | Native code, loop and registered extension controls through a separate privileged tool |
+| Skills | Updated runtime injection and both downloadable package formats |
 
-Do not label the integration complete against all Oxygen features until these
-remaining workflows have been implemented and tested. Prioritize condition
-editing and component properties, then remote Design Library dependency handling,
-then global design controls. Test each with native-editor round trips and MCP
-fixtures exclusively on elementor-mcp.test.
+### Write contracts
 
-### Added operations
+- Defaults migration 46 disables eight new write tools without changing existing
+  choices. Advanced tree/global/import writes require `unfiltered_html` as well
+  as native full access. Global writes also require `edit_theme_options`.
+- Library records are published by Oxygen itself. Matching templates start
+  `disabled: true`; pages/posts start as drafts. Enabling a template is explicit.
+- Template-setting revisions store an additional snapshot on the revision ID;
+  ordinary native Oxygen revisions store only the tree. Template-settings
+  restoration is opt-in and rejects revisions without that snapshot.
+- Global scopes use separate hashes. Twenty complete prior documents include
+  collections/preferences omitted by native global revisions.
+- Imports validate bounded native bundles, resolve dependencies before saving,
+  allocate new post/design IDs and namespace classes/variables. Request IDs
+  prevent duplicate replay. Partial results retain created IDs and global
+  revision IDs for recovery; imports do not claim transaction atomicity.
 
-- get-template-schema: lazily registers Oxygen's native template locations for
-  MCP requests, which do not otherwise initialize the native template admin UI.
-- create-template: accepts template/header/footer/component, checks native type
-  access and create/publish capabilities, initializes with save_document.
-- update-template-settings: hash-checked location/priority/disabled patch,
-  preserves conditions, prior revision, native save and readback.
-- insert-component: validated native reference to a readable component master;
-  rejects wrong post types, nesting and per-instance overrides.
-- get-design-library: local settings and registered sets; no remote fetch.
-- copy-library-item: same-site reuse with source hash and supported tree checks;
-  retains class/component references and disables copied matching templates.
+### Boundaries
 
-Oxygen forces library records to publish; template inactivity uses its disabled
-flag. Pages remain drafts. Defaults migration 45 disables the four new write
-tools without changing earlier choices.
+Design transfer is not a complete WordPress migration. Media URLs remain remote;
+custom fields, attachments, menus, homepage assignment and ordinary post content
+are not transferred. Review imported conditions referencing external WordPress
+records before enabling matching. Global selector rules require a separate
+explicit design save; automatic imports accept class selectors.
+
+Remote providers use WordPress safe HTTP with no redirects and bounded responses.
+Local/private hosts may be refused. Transport success, error envelopes, bounds
+and password-redaction behavior are unit-tested; a third-party provider import
+has not been tested live in this run. Local export/import was tested through MCP.
+
+Oxygen core disables Breakdance global settings; the corresponding scope exposes
+controls only when an installed extension supplies them. Advanced authoring uses
+registered schemas and native saves, but does not install optional extensions or
+author Element Studio plugin source. Uninstalled extensions and every possible
+dynamic field/action combination are not claimed as individually verified.
 
 ## References
 
@@ -132,3 +138,35 @@ Preview: https://elementor-mcp.test/?page_id=2001&preview=true (signed-in draft)
   coverage of these new workflows.
 
 Component/library test draft: https://elementor-mcp.test/?page_id=2032&preview=true
+
+## Advanced integration validation — September 20, 2026
+
+- Full Pro suite: 2,813 tests, 11,408 assertions, six existing skips at the first
+  full checkpoint. Public suite: 232 tests, 602 assertions. Additional focused
+  transport/skill tests added afterward; see final run results below.
+- MCP fixtures on elementor-mcp.test: component 2145, page 2151, header 2156,
+  imported page/component 2159/2161 and advanced page 2167. All were authored
+  through the configured MCP stdio dispatcher. No dev-site test page was created.
+- Verified exposed properties/overrides, cyclic and forged-target rejection,
+  stale global hashes, variable and preference restore, header conditions,
+  document trash/restore, native tree and template-settings revision restore.
+- Local export/import remapped the component ID; replay returned the same result.
+- Chrome native editor displayed the Heading control and override. Native Save
+  round trip preserved it. Frontend rendered the override, HTML and a two-item
+  posts loop. A page-scoped header appeared only on page 2151; it was restored
+  disabled after the matching test.
+- Claude's existing changes remain in the working tree. Nothing was pushed.
+
+### Final checks
+
+- Final full suite: **2,828 tests, 11,488 assertions, six existing skips**, no
+  failures. Public suite: **232 tests, 602 assertions**, no failures.
+- Native variable rendered `rgb(36, 104, 75)` and the generated nested hover rule
+  rendered `rgb(18, 52, 86)` in the stylesheet. Styles are scoped to the advanced
+  fixture's dedicated class. Library configuration toggle/save/stale-hash checks
+  passed and the original sharing flags were restored.
+- Both downloadable skill archives contain the same updated Oxygen skill body;
+  focused Oxygen/skill tests passed. PHP lint passed for all Oxygen runtime files.
+
+Temporary write opt-ins were restored. A subsequent MCP create-page request was
+denied, and the updated skill was retrieved successfully over MCP.
