@@ -459,7 +459,7 @@ class EMCP_Tools_Admin {
 	 *
 	 * @since 1.8.0
 	 */
-	const DEFAULTS_VERSION = 52;
+	const DEFAULTS_VERSION = 53;
 
 	/**
 	 * Themer PHP-template tool slugs. The whole feature is gated behind a master

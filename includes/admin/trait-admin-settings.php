@@ -311,6 +311,10 @@ trait EMCP_Tools_Admin_Settings_Trait {
 		if ($applied < 44) { foreach (array('create-page','set-page-tree','add-element','update-element','move-element','remove-element','save-class') as $slug) { $add[]='emcp-tools/oxygen-'.$slug; } }
 		if ($applied < 51) { foreach (array('create-page','stage-document','apply-template','restore-revision','discard-draft','publish-page') as $slug) { $add[]='emcp-tools/visual-composer-'.$slug; } }
 		if ($applied < 52) { foreach (array('create-page','set-page-blocks','publish-page','add-block','update-block','move-block','remove-block','insert-pattern','rebuild-page-styles','update-settings') as $slug) { $add[]='emcp-tools/otter-'.$slug; } }
+		// v53: Visibility write dispatcher disabled-by-default, like every SEO write (#141).
+		if ( $applied < 53 ) {
+			$add[] = 'emcp-tools/visibility-write';
+		}
 		$merged = array_values( array_unique( array_merge( $existing, $add ) ) );
 		update_option( self::OPTION_DISABLED_TOOLS, $merged );
 		update_option( self::OPTION_DEFAULTS_APPLIED, (string) self::DEFAULTS_VERSION );

@@ -45,6 +45,82 @@ class EMCP_Tools_Element_Factory {
 	}
 
 	/**
+	 * Sub-keys of a classic `dimensions` / `gaps` control. Elementor's editor
+	 * always serialises them as strings ("40", not 40). The CSS is the same
+	 * either way, but the editor's Layout panel hydrates strictly and shows 0
+	 * for a numeric side (#146).
+	 */
+	private const DIMENSION_SIDES = array( 'top', 'right', 'bottom', 'left', 'column', 'row' );
+
+	/**
+	 * Cast numeric dimension sides to the string form the editor expects.
+	 *
+	 * Only arrays that look like a classic dimension value are touched: they
+	 * carry `unit` plus at least one side key and no `$$type` wrapper (atomic
+	 * props have their own typed shape). Slider `size` values stay numeric,
+	 * matching the editor. Nested arrays (repeaters) are walked too.
+	 *
+	 * @since 3.17.1
+	 *
+	 * @param array $settings Element settings.
+	 * @return array
+	 */
+	public static function normalize_dimension_settings( array $settings ): array {
+		foreach ( $settings as $key => $value ) {
+			if ( ! is_array( $value ) || isset( $value['$$type'] ) ) {
+				continue;
+			}
+			if ( self::looks_like_dimensions( $value ) ) {
+				foreach ( self::DIMENSION_SIDES as $side ) {
+					if ( isset( $value[ $side ] ) && ( is_int( $value[ $side ] ) || is_float( $value[ $side ] ) ) ) {
+						$value[ $side ] = (string) $value[ $side ];
+					}
+				}
+				$settings[ $key ] = $value;
+				continue;
+			}
+			$settings[ $key ] = self::normalize_dimension_settings( $value );
+		}
+		return $settings;
+	}
+
+	/**
+	 * Apply normalize_dimension_settings() to every element in a tree.
+	 *
+	 * @since 3.17.1
+	 *
+	 * @param array $elements Element tree.
+	 * @return array
+	 */
+	public static function normalize_dimension_tree( array $elements ): array {
+		foreach ( $elements as &$element ) {
+			if ( ! is_array( $element ) ) {
+				continue;
+			}
+			if ( ! empty( $element['settings'] ) && is_array( $element['settings'] ) ) {
+				$element['settings'] = self::normalize_dimension_settings( $element['settings'] );
+			}
+			if ( ! empty( $element['elements'] ) && is_array( $element['elements'] ) ) {
+				$element['elements'] = self::normalize_dimension_tree( $element['elements'] );
+			}
+		}
+		unset( $element );
+		return $elements;
+	}
+
+	private static function looks_like_dimensions( array $value ): bool {
+		if ( ! array_key_exists( 'unit', $value ) ) {
+			return false;
+		}
+		foreach ( self::DIMENSION_SIDES as $side ) {
+			if ( array_key_exists( $side, $value ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Creates a container element.
 	 *
 	 * @since 1.0.0

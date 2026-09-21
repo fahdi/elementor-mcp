@@ -211,10 +211,14 @@ class EMCP_Tools_OAuth_Metadata {
 		$path = self::request_path();
 
 		// Match both the root well-known path and the resource-scoped variant
-		// clients build by appending the resource path, e.g.
+		// clients build by appending OUR resource path, e.g.
 		// /.well-known/oauth-protected-resource/wp-json/mcp/emcp-tools-server
 		// (RFC 9728 §3.1). Exact-match-only 404s the request real MCP clients
-		// actually make, which silently breaks OAuth discovery.
+		// actually make, which silently breaks OAuth discovery. Any OTHER suffix
+		// belongs to another authorization server on this host (a second MCP
+		// plugin with a path-based issuer, RFC 8414 §3.1) and must fall through
+		// so that plugin can answer; claiming it hands the client a document
+		// whose issuer does not match and the flow dies before consent.
 		if ( self::path_matches( $path, self::PATH_PROTECTED_RESOURCE ) ) {
 			self::emit( self::protected_resource_document() );
 		}
@@ -224,15 +228,43 @@ class EMCP_Tools_OAuth_Metadata {
 	}
 
 	/**
-	 * Whether a request path is the given well-known path or a resource-scoped
-	 * variant of it (the well-known path followed by a "/…" resource path).
+	 * Whether a request path is the given well-known path or the resource-scoped
+	 * variant of it for EMCP's OWN resource (the well-known path followed by
+	 * one of own_resource_paths()). A well-known path followed by any other
+	 * resource path is another server's discovery request and is not matched.
 	 *
-	 * @param string $path     Request path.
+	 * @param string $path      Request path (site-root-relative, no trailing slash).
 	 * @param string $wellknown Base well-known path.
 	 * @return bool
 	 */
 	public static function path_matches( string $path, string $wellknown ): bool {
-		return $path === $wellknown || 0 === strpos( $path, $wellknown . '/' );
+		if ( $path === $wellknown ) {
+			return true;
+		}
+		if ( 0 !== strpos( $path, $wellknown . '/' ) ) {
+			return false;
+		}
+		$suffix = untrailingslashit( substr( $path, strlen( $wellknown ) ) );
+		return in_array( $suffix, self::own_resource_paths(), true );
+	}
+
+	/**
+	 * The resource path suffixes that identify EMCP's own MCP endpoint in a
+	 * resource-scoped well-known request: the path of resource() as advertised,
+	 * plus its site-root-relative form for subdirectory installs, where the
+	 * request arrives home-path-stripped (see request_path()).
+	 *
+	 * @since 3.17.1
+	 *
+	 * @return string[] Paths starting with "/", no trailing slash.
+	 */
+	public static function own_resource_paths(): array {
+		$resource = (string) wp_parse_url( self::resource(), PHP_URL_PATH );
+		$resource = '/' . ltrim( untrailingslashit( $resource ), '/' );
+		$paths    = array( $resource, self::normalize_request_path( $resource ) );
+		return array_values( array_unique( array_filter( $paths, static function ( $p ) {
+			return '' !== $p && '/' !== $p;
+		} ) ) );
 	}
 
 	/**

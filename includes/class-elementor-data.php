@@ -274,6 +274,30 @@ class EMCP_Tools_Data {
 	}
 
 	/**
+	 * Flatten an element tree to its ids, depth first.
+	 *
+	 * @since 3.17.1
+	 *
+	 * @param array $elements Element tree.
+	 * @return string[]
+	 */
+	public static function collect_element_ids( array $elements ): array {
+		$ids = array();
+		foreach ( $elements as $element ) {
+			if ( ! is_array( $element ) ) {
+				continue;
+			}
+			if ( isset( $element['id'] ) && is_scalar( $element['id'] ) ) {
+				$ids[] = (string) $element['id'];
+			}
+			if ( ! empty( $element['elements'] ) && is_array( $element['elements'] ) ) {
+				$ids = array_merge( $ids, self::collect_element_ids( $element['elements'] ) );
+			}
+		}
+		return $ids;
+	}
+
+	/**
 	 * Saves page data using Elementor's native save mechanism.
 	 *
 	 * Tries document save() first (triggers CSS regeneration). If that fails
@@ -301,6 +325,10 @@ class EMCP_Tools_Data {
 		// Sweep the tree on the way out instead. This only ever turns invalid
 		// values into valid ones, so it is a no-op for healthy pages.
 		$data = EMCP_Tools_Atomic_Props::coerce_tree( $data );
+
+		// Classic dimension sides (margin/padding/gap/border) must be strings or
+		// the editor's Layout panel shows 0 for a value that renders fine (#146).
+		$data = EMCP_Tools_Element_Factory::normalize_dimension_tree( $data );
 
 		// Capture the prior Elementor data so the change ledger can offer a rollback.
 		$emcp_before_raw = get_post_meta( $post_id, '_elementor_data', true );
@@ -367,6 +395,16 @@ class EMCP_Tools_Data {
 				? json_decode( $persisted_raw, true )
 				: null;
 			if ( empty( $persisted ) || ! is_array( $persisted ) ) {
+				$needs_fallback = true;
+			} elseif ( array_diff( self::collect_element_ids( $data ), self::collect_element_ids( $persisted ) ) ) {
+				// PARTIAL drop (#143): Document::save() rebuilds the tree through
+				// create_element_instance(), which returns null for a widget type
+				// not registered in this context (FunnelKit / CartFlows checkout
+				// widgets register conditionally, so they are absent under CLI and
+				// REST) and get_elements_raw_data() silently skips it. The native
+				// save then reports success with the widget gone. Any element we
+				// sent that did not land forces the direct write, which keeps every
+				// element byte for byte.
 				$needs_fallback = true;
 			}
 		}
@@ -459,19 +497,25 @@ class EMCP_Tools_Data {
 		}
 
 		$before = get_post_meta( $post_id, '_elementor_page_settings', false );
-		$result = $document->save( array( 'settings' => $settings ) );
+
+		// Elementor's page-settings manager writes `_elementor_page_settings`
+		// as a FULL REPLACE, so a one-key patch on the active kit wiped every
+		// custom color, typography preset and site-identity value it held (#145).
+		// This tool is documented as a partial update like update-element, so
+		// merge the patch into what is stored before handing it to Elementor.
+		$existing = get_post_meta( $post_id, '_elementor_page_settings', true );
+		if ( ! is_array( $existing ) ) {
+			$existing = array();
+		}
+		$merged = array_merge( $existing, $settings );
+
+		$result = $document->save( array( 'settings' => $merged ) );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
 
 		if ( ! $result ) {
-			// Fallback: merge settings into existing page settings meta.
-			$existing = get_post_meta( $post_id, '_elementor_page_settings', true );
-			if ( ! is_array( $existing ) ) {
-				$existing = array();
-			}
-
-			$merged = array_merge( $existing, $settings );
+			// Fallback: direct meta write for non-browser contexts (CLI, REST proxy).
 			update_post_meta( $post_id, '_elementor_page_settings', wp_slash( $merged ) );
 
 			// Invalidate CSS cache.

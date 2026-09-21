@@ -1,6 +1,6 @@
 <?php
 /**
- * Visibility integration (free) — two dispatcher tools (visibility-read /
+ * Visibility integration (free): two dispatcher tools (visibility-read /
  * visibility-write) over Visibility's per-post `_native_aeo_pack_*` meta keys.
  *
  * Unlike Slim SEO, Visibility does not store its SEO fields as a single
@@ -11,7 +11,7 @@
  * Native_AEO_Pack_Term_Meta for the equivalent keys if that's added later.
  *
  * @package EMCP_Tools
- * @since   3.17.0
+ * @since   3.17.1
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * @since 3.17.0
+ * @since 3.17.1
  */
 class EMCP_Tools_Visibility_Integration extends EMCP_Tools_SEO_Integration {
 
@@ -177,8 +177,40 @@ class EMCP_Tools_Visibility_Integration extends EMCP_Tools_SEO_Integration {
 	}
 
 	/**
-	 * Write the provided fields for a post. Only keys present in $args change;
-	 * an invalid schema_type is silently skipped rather than stored.
+	 * Validate the provided fields before anything is written. The only field
+	 * with a closed value set is schema_type: one of Visibility's own choices,
+	 * or '' to clear the override back to the site default (Visibility's REST
+	 * sanitizer stores '' for anything it does not recognise).
+	 *
+	 * @param array $args Operation arguments.
+	 * @return true|WP_Error
+	 */
+	private function validate( array $args ) {
+		if ( ! array_key_exists( 'schema_type', $args ) ) {
+			return true;
+		}
+		$value   = is_scalar( $args['schema_type'] ) ? (string) $args['schema_type'] : null;
+		$allowed = $this->schema_type_choices();
+		if ( '' === $value || ( null !== $value && in_array( $value, $allowed, true ) ) ) {
+			return true;
+		}
+		return new WP_Error(
+			'invalid_schema_type',
+			sprintf(
+				/* translators: %s: comma-separated list of allowed values */
+				__( 'schema_type must be one of: %s (or an empty string to use the site default).', 'emcp-tools' ),
+				implode( ', ', $allowed )
+			),
+			array(
+				'status'  => 400,
+				'allowed' => $allowed,
+			)
+		);
+	}
+
+	/**
+	 * Write the provided fields for a post. Only keys present in $args change.
+	 * Call validate() first; this never writes a partial update.
 	 *
 	 * @param int   $id   Post id.
 	 * @param array $args Operation arguments.
@@ -192,10 +224,6 @@ class EMCP_Tools_Visibility_Integration extends EMCP_Tools_SEO_Integration {
 				update_post_meta( $id, $spec['key'], ! empty( $args[ $field ] ) ? '1' : '' );
 			} elseif ( 'int' === $spec['type'] ) {
 				update_post_meta( $id, $spec['key'], absint( $args[ $field ] ) );
-			} elseif ( 'schema_type' === $spec['type'] ) {
-				if ( in_array( $args[ $field ], $this->schema_type_choices(), true ) ) {
-					update_post_meta( $id, $spec['key'], (string) $args[ $field ] );
-				}
 			} else {
 				update_post_meta( $id, $spec['key'], is_scalar( $args[ $field ] ) ? (string) $args[ $field ] : '' );
 			}
@@ -225,6 +253,10 @@ class EMCP_Tools_Visibility_Integration extends EMCP_Tools_SEO_Integration {
 		$id = isset( $args['post_id'] ) ? absint( $args['post_id'] ) : 0;
 		if ( ! $id || ! get_post( $id ) ) {
 			return $this->missing_or_not_found( 'post_id', $id );
+		}
+		$valid = $this->validate( $args );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
 		}
 		$this->apply( $id, $args );
 		return array(

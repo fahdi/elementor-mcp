@@ -322,6 +322,15 @@ trait EMCP_Tools_Admin_Integrations_Trait {
 		return defined( 'SLIM_SEO_VER' ) || class_exists( '\\SlimSEO\\Plugin' );
 	}
 
+	/**
+	 * Whether Visibility (native-aeo-pack) is active.
+	 *
+	 * @since 3.17.1
+	 */
+	public static function visibility_available(): bool {
+		return defined( 'NATIVE_AEO_PACK_VERSION' );
+	}
+
 	/** @since 3.5.0 */
 	public static function yoast_available(): bool {
 		return defined( 'WPSEO_VERSION' );

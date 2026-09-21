@@ -886,6 +886,30 @@ trait EMCP_Tools_Admin_Catalog_Trait {
 					),
 				),
 			),
+			'wp_visibility'    => array(
+				'platform' => 'plugins',
+				'group'    => 'seo',
+				'label'    => __( 'Visibility', 'emcp-tools' ),
+				'note'     => __( 'Visibility (native-aeo-pack) exposed as two tools, one Read, one Write. Read and write the per-post SEO metadata it stores: title, description, canonical, robots flags, Open Graph fields, sitemap exclusion and the Schema.org type override. Community contribution (#141).', 'emcp-tools' ),
+				'tools'    => array(
+					'emcp-tools/visibility-read'  => array(
+						'label'            => __( 'Visibility Read', 'emcp-tools' ),
+						'description'      => __( 'Read Visibility post SEO metadata.', 'emcp-tools' ),
+						'badges'           => array( 'read-only' ),
+						'operations'       => array( 'get-post-seo' ),
+						'available'        => self::visibility_available(),
+						'requires'         => array( 'name' => 'Visibility', 'kind' => 'plugin' ),
+					),
+					'emcp-tools/visibility-write' => array(
+						'label'            => __( 'Visibility Write', 'emcp-tools' ),
+						'description'      => __( 'Update Visibility post SEO metadata.', 'emcp-tools' ),
+						'badges'           => array(),
+						'operations'       => array( 'update-post-seo' ),
+						'available'        => self::visibility_available(),
+						'requires'         => array( 'name' => 'Visibility', 'kind' => 'plugin' ),
+					),
+				),
+			),
 			'wp_yoast'         => array(
 				'platform' => 'plugins',
 				'group'    => 'seo',

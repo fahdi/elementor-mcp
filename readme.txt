@@ -3,7 +3,7 @@ Contributors: mianshahzadraza
 Tags: elementor, mcp, ai, page-builder, automation
 Requires at least: 6.9
 Tested up to: 7.1
-Stable tag: 3.17.0
+Stable tag: 3.17.1
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -178,6 +178,18 @@ On shared LiteSpeed hosting (e.g. Hostinger) this is usually the host caching/bu
 2. Connection configuration page with copy-paste configs.
 
 == Changelog ==
+
+= 3.17.1 =
+
+Patch release: three data-safety fixes for Elementor writes, a Cloud gateway reconnect fix, an OAuth discovery fix for sites running a second MCP plugin, and a community-contributed Visibility SEO integration.
+
+* Fixed: update-page-settings merges into the stored settings instead of replacing the whole object, so a one-key patch on the active kit no longer wipes custom colors, typography presets and site identity (#145).
+* Fixed: update-global-colors refuses the system color ids (primary, secondary, text, accent) instead of writing a shadow custom color, and reports which ids it wrote (#145).
+* Fixed: Dimension values (margin, padding, gap, border) are stored as strings so the Elementor editor's Layout panel shows the real value instead of 0 (#146).
+* Fixed: Third-party widgets Elementor cannot instantiate in the current context (FunnelKit Pro, CartFlows checkout forms) are no longer silently dropped when another element on the page is edited over MCP (#143).
+* Fixed: Reconnecting to EMCP Cloud re-issues or withdraws the gateway credential according to the gateway box, and a Re-issue gateway credential button covers a credential revoked or lost outside a reconnect (#148).
+* Fixed: OAuth discovery answers only the well-known paths scoped to EMCP's own MCP resource, so a second OAuth-capable MCP plugin on the same site (path-based issuer) can serve its own discovery document and connect without switching EMCP sign-in off.
+* New: Visibility SEO integration, free, two tools, read and write, over Visibility's per-post SEO metadata including robots flags, Open Graph fields and the Schema.org type override. Contributed by Fernando Tellado (#141, #149).
 
 = 3.17.0 =
 

@@ -403,7 +403,7 @@ trait EMCP_Tools_Admin_Tool_Groups_Trait {
 	}
 
 	/**
-	 * The 14 SEO dispatcher slugs — drift-guard exclusion (registered only when
+	 * The 16 SEO dispatcher slugs — drift-guard exclusion (registered only when
 	 * their plugin is active / Pro).
 	 *
 	 * @since 3.5.0
@@ -413,6 +413,8 @@ trait EMCP_Tools_Admin_Tool_Groups_Trait {
 		return array(
 			'emcp-tools/slimseo-read',
 			'emcp-tools/slimseo-write',
+			'emcp-tools/visibility-read',
+			'emcp-tools/visibility-write',
 			'emcp-tools/yoast-read',
 			'emcp-tools/yoast-write',
 			'emcp-tools/rankmath-read',

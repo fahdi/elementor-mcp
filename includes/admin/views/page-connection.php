@@ -692,9 +692,22 @@ SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1</pre>
 									<strong><?php esc_html_e( 'Reconnect needed.', 'emcp-tools' ); ?></strong>
 								<?php endif; ?>
 							</p>
+							<?php
+							$emcp_gateway_flag = isset( $_GET['cloud_gateway'] ) ? sanitize_key( wp_unslash( $_GET['cloud_gateway'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+							if ( 'reissued' === $emcp_gateway_flag ) : ?>
+								<div class="notice notice-success inline"><p><?php esc_html_e( 'Gateway credential re-issued. EMCP Cloud can manage this site through the gateway again.', 'emcp-tools' ); ?></p></div>
+							<?php elseif ( '' !== $emcp_gateway_flag ) : ?>
+								<div class="notice notice-error inline"><p><?php esc_html_e( 'The gateway credential could not be re-issued. Reconnect this site with the gateway option ticked, then try again.', 'emcp-tools' ); ?></p></div>
+							<?php endif; ?>
 							<p>
 								<a href="<?php echo esc_url( EMCP_Tools_Cloud_Connect::disconnect_url() ); ?>" class="button"><?php esc_html_e( 'Disconnect', 'emcp-tools' ); ?></a>
+								<?php if ( class_exists( 'EMCP_Tools_Gateway_Credential' ) && $emcp_cloud_status['healthy'] ) : ?>
+									<a href="<?php echo esc_url( EMCP_Tools_Cloud_Connect::reissue_url() ); ?>" class="button"><?php echo get_option( EMCP_Tools_Gateway_Credential::OPTION_FLAG, 0 ) ? esc_html__( 'Re-issue gateway credential', 'emcp-tools' ) : esc_html__( 'Enable gateway access', 'emcp-tools' ); ?></a>
+								<?php endif; ?>
 							</p>
+							<?php if ( class_exists( 'EMCP_Tools_Gateway_Credential' ) && $emcp_cloud_status['healthy'] && get_option( EMCP_Tools_Gateway_Credential::OPTION_FLAG, 0 ) ) : ?>
+								<p class="description"><?php esc_html_e( 'If EMCP Cloud reports a gateway access issue for this site while the connection here is healthy, re-issue the credential. This happens after the EMCP Gateway app is revoked under Users > Authorized Apps, or after a restore or migration.', 'emcp-tools' ); ?></p>
+							<?php endif; ?>
 							<?php if ( ! $emcp_cloud_status['healthy'] ) :
 								$emcp_connect_label = __( 'Reconnect', 'emcp-tools' );
 								require EMCP_TOOLS_DIR . 'includes/admin/views/partials/cloud-connect-form.php';

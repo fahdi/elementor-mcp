@@ -13,6 +13,7 @@ class EMCP_Tools_Cloud_Connect {
 	const ACTION_CONNECT    = 'emcp_tools_cloud_connect';
 	const ACTION_CALLBACK   = 'emcp_tools_cloud_callback';
 	const ACTION_DISCONNECT = 'emcp_tools_cloud_disconnect';
+	const ACTION_REISSUE    = 'emcp_tools_cloud_gateway_reissue';
 	const PENDING_TRANSIENT = 'emcp_tools_cloud_pending';
 	// Treat the access token as expired this many seconds early (matches the
 	// client's own leeway) when deciding whether a concurrent request already
@@ -31,6 +32,7 @@ class EMCP_Tools_Cloud_Connect {
 		add_action( 'admin_post_' . self::ACTION_CONNECT, array( __CLASS__, 'handle_connect' ) );
 		add_action( 'admin_post_' . self::ACTION_CALLBACK, array( __CLASS__, 'handle_callback' ) );
 		add_action( 'admin_post_' . self::ACTION_DISCONNECT, array( __CLASS__, 'handle_disconnect' ) );
+		add_action( 'admin_post_' . self::ACTION_REISSUE, array( __CLASS__, 'handle_gateway_reissue' ) );
 	}
 
 	/**
@@ -350,12 +352,7 @@ class EMCP_Tools_Cloud_Connect {
 		$gateway_optin = isset( $_POST['emcp_gateway_optin'] );
 		set_transient(
 			self::PENDING_TRANSIENT,
-			array(
-				'verifier'  => $verifier,
-				'csrf'      => $csrf,
-				'client_id' => $client_id,
-				'gateway'   => $gateway_optin,
-			),
+			self::pending_record( $verifier, $csrf, $client_id, $registration_proof, $gateway_optin ),
 			600
 		);
 		// The authorize URL is on the Cloud host, not this site. wp_safe_redirect()
@@ -397,13 +394,98 @@ class EMCP_Tools_Cloud_Connect {
 			self::back( 'cloud_error=state' );
 		}
 		$bundle = self::exchange_code( $code, (string) $pending['verifier'], (string) $pending['client_id'] );
-		if ( ! is_wp_error( $bundle ) && ! empty( $pending['gateway'] ) && class_exists( 'EMCP_Tools_Gateway_Credential' ) ) {
+		if ( ! is_wp_error( $bundle ) && class_exists( 'EMCP_Tools_Gateway_Credential' ) ) {
 			// Best-effort: the Cloud connection has already succeeded above, so a
 			// gateway provisioning failure here must never turn into a user-facing
-			// error — it just leaves the gateway un-provisioned for this site.
-			EMCP_Tools_Gateway_Credential::provision( get_current_user_id() );
+			// error, it just leaves the gateway un-provisioned for this site.
+			$action = self::gateway_action( $pending );
+			if ( 'provision' === $action ) {
+				EMCP_Tools_Gateway_Credential::provision( get_current_user_id() );
+			} elseif ( 'deprovision' === $action ) {
+				EMCP_Tools_Gateway_Credential::deprovision();
+			}
 		}
 		self::back( is_wp_error( $bundle ) ? 'cloud_error=token' : 'cloud_connected=1' );
+	}
+
+	/**
+	 * Build the pending-connect record stored between handle_connect() and
+	 * handle_callback(). Captures whether the site already held a gateway
+	 * credential so the callback can tell "reconnect of a gateway site" from
+	 * "first connect without the gateway" (#148).
+	 *
+	 * @param string $verifier           PKCE verifier.
+	 * @param string $csrf               State CSRF token.
+	 * @param string $client_id          DCR client id.
+	 * @param string $registration_proof DCR registration proof.
+	 * @param bool   $gateway_optin      Whether the gateway box was ticked.
+	 * @return array<string,mixed>
+	 */
+	public static function pending_record( string $verifier, string $csrf, string $client_id, string $registration_proof, bool $gateway_optin ): array {
+		$was_provisioned = class_exists( 'EMCP_Tools_Gateway_Credential' )
+			&& (bool) get_option( EMCP_Tools_Gateway_Credential::OPTION_FLAG, 0 );
+		return array(
+			'verifier'        => $verifier,
+			'csrf'            => $csrf,
+			'client_id'       => $client_id,
+			'gateway'         => $gateway_optin,
+			'was_provisioned' => $was_provisioned,
+		);
+	}
+
+	/**
+	 * What the callback should do about the gateway credential.
+	 *
+	 * The connect form is the only way into handle_connect() and its box is
+	 * always rendered (checked, and labelled "currently enabled" once a
+	 * credential exists), so the box is the truth: ticked re-issues the
+	 * credential, unticked on a previously provisioned site withdraws it so
+	 * Cloud and the site agree instead of Cloud holding a dead token (#148).
+	 *
+	 * @param array $pending The pending-connect record.
+	 * @return string 'provision' | 'deprovision' | 'none'
+	 */
+	public static function gateway_action( array $pending ): string {
+		if ( ! empty( $pending['gateway'] ) ) {
+			return 'provision';
+		}
+		if ( ! empty( $pending['was_provisioned'] ) ) {
+			return 'deprovision';
+		}
+		return 'none';
+	}
+
+	/**
+	 * Re-issue the gateway credential without a reconnect. Covers the cases
+	 * where the local token died behind Cloud's back: revoked under Users >
+	 * Authorized Apps, OAuth tables recreated, site restored or migrated.
+	 *
+	 * @param int $user_id The user the credential acts as.
+	 * @return true|\WP_Error
+	 */
+	public static function reissue_gateway( int $user_id ) {
+		if ( ! EMCP_Tools_Cloud::is_connected() ) {
+			return new \WP_Error( 'not_connected', __( 'Connect this site to EMCP Cloud first.', 'emcp-tools' ) );
+		}
+		if ( ! class_exists( 'EMCP_Tools_Gateway_Credential' ) ) {
+			return new \WP_Error( 'gateway_unavailable', __( 'The gateway credential helper is not loaded.', 'emcp-tools' ) );
+		}
+		if ( ! EMCP_Tools_Gateway_Credential::provision( $user_id ) ) {
+			return new \WP_Error( 'provision_failed', __( 'EMCP Cloud did not accept the new gateway credential.', 'emcp-tools' ) );
+		}
+		return true;
+	}
+
+	/**
+	 * Admin-post handler for the "Re-issue gateway credential" button. Nonce-protected.
+	 *
+	 * @return void
+	 */
+	public static function handle_gateway_reissue(): void {
+		self::guard_cap();
+		check_admin_referer( self::ACTION_REISSUE );
+		$result = self::reissue_gateway( get_current_user_id() );
+		self::back( is_wp_error( $result ) ? 'cloud_gateway=' . $result->get_error_code() : 'cloud_gateway=reissued' );
 	}
 
 	/**
@@ -427,6 +509,13 @@ class EMCP_Tools_Cloud_Connect {
 	 */
 	public static function connect_url(): string {
 		return wp_nonce_url( admin_url( 'admin-post.php?action=' . self::ACTION_CONNECT ), self::ACTION_CONNECT );
+	}
+
+	/**
+	 * @return string Nonce'd re-issue-gateway button URL.
+	 */
+	public static function reissue_url(): string {
+		return wp_nonce_url( admin_url( 'admin-post.php?action=' . self::ACTION_REISSUE ), self::ACTION_REISSUE );
 	}
 
 	/**

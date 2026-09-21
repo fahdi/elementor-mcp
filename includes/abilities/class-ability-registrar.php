@@ -321,8 +321,8 @@ class EMCP_Tools_Ability_Registrar {
 			$seo_integrations[] = new EMCP_Tools_SlimSEO_Integration();
 		}
 		if ( class_exists( 'EMCP_Tools_Visibility_Integration' ) ) {
-    		$seo_integrations[] = new EMCP_Tools_Visibility_Integration();
-}
+			$seo_integrations[] = new EMCP_Tools_Visibility_Integration();
+		}
 		if ( function_exists( 'emcp_tools_fs' ) && emcp_tools_fs()->can_use_premium_code() ) {
 			foreach ( array(
 				'EMCP_Tools_Yoast_Integration',
