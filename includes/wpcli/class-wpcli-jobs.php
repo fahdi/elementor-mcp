@@ -34,13 +34,14 @@ class EMCP_Tools_WPCLI_Jobs {
 
 	/** Absolute path to the jobs base directory (created + web-protected on demand). */
 	public function dir(): string {
-		$uploads = wp_upload_dir();
-		$dir     = trailingslashit( $uploads['basedir'] ) . 'emcp-wpcli-jobs';
-		if ( ! is_dir( $dir ) ) {
+		// Unguessable, deny-listed directory: job logs hold command output
+		// (option values, user lists) and uploads is served on every server.
+		$dir = EMCP_Tools_Filesystem_Guard::private_dir( 'emcp-wpcli-jobs' );
+		if ( is_wp_error( $dir ) ) {
+			$uploads = wp_upload_dir();
+			$dir     = trailingslashit( $uploads['basedir'] ) . EMCP_Tools_Filesystem_Guard::private_dir_name( 'emcp-wpcli-jobs', EMCP_Tools_Filesystem_Guard::private_dir_token() );
 			wp_mkdir_p( $dir );
-			// Block web access to job logs.
-			@file_put_contents( $dir . '/.htaccess', "Require all denied\nDeny from all\n" ); // phpcs:ignore
-			@file_put_contents( $dir . '/index.php', "<?php // Silence is golden.\n" ); // phpcs:ignore
+			EMCP_Tools_Filesystem_Guard::protect_dir( $dir );
 		}
 		return $dir;
 	}

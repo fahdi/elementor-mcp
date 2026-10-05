@@ -23,6 +23,9 @@ class EMCP_Tools_Filesystem_Guard {
 	const MAX_WRITE_BYTES = 5242880; // 5 MB
 	const BACKUP_DIR      = 'emcp-fs-backups';
 
+	/** Option holding the per-site secret that names private upload directories. */
+	const TOKEN_OPTION = 'emcp_tools_private_dir_token';
+
 	/**
 	 * Confine a path to $root (defaults to ABSPATH). Returns the canonical
 	 * absolute path, or WP_Error when the path is invalid or escapes the root.
@@ -208,8 +211,93 @@ class EMCP_Tools_Filesystem_Guard {
 		return str_replace( '\\', '/', $abs_n );
 	}
 
+	// ---- private directories under uploads -----------------------------
+
 	/**
-	 * Copy a file to a timestamped backup under uploads/emcp-fs-backups/.
+	 * Per-site random token that names private upload directories.
+	 *
+	 * wp-content/uploads is served by every web server. The .htaccess rules
+	 * below only bind Apache; on Nginx / LiteSpeed / Caddy the directory would
+	 * otherwise be readable at a predictable URL, exposing backups of edited
+	 * plugin files (API keys, config) and WP-CLI job output. An unguessable
+	 * directory name is the server-agnostic control; the deny files are the
+	 * belt to its braces.
+	 *
+	 * @return string 32 lowercase hex characters.
+	 */
+	public static function private_dir_token(): string {
+		$token = (string) get_option( self::TOKEN_OPTION, '' );
+		if ( 1 !== preg_match( '/^[a-f0-9]{32}$/', $token ) ) {
+			$token = bin2hex( random_bytes( 16 ) );
+			update_option( self::TOKEN_OPTION, $token, false );
+		}
+		return $token;
+	}
+
+	/**
+	 * Pure: directory basename for a private store.
+	 *
+	 * @param string $slug  Store slug (e.g. emcp-fs-backups).
+	 * @param string $token Site token; only [a-z0-9] survive.
+	 * @return string
+	 */
+	public static function private_dir_name( string $slug, string $token ): string {
+		$token = preg_replace( '/[^a-z0-9]/', '', strtolower( $token ) );
+		return $slug . '-' . $token;
+	}
+
+	/** Apache 2.2 + 2.4 deny-all rules. */
+	public static function htaccess_deny_rules(): string {
+		return "Options -Indexes\n"
+			. "<IfModule mod_authz_core.c>\n\tRequire all denied\n</IfModule>\n"
+			. "<IfModule !mod_authz_core.c>\n\tOrder deny,allow\n\tDeny from all\n</IfModule>\n";
+	}
+
+	/** IIS deny-all rules. */
+	public static function web_config_deny_rules(): string {
+		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<configuration>\n\t<system.webServer>\n\t\t<security>\n\t\t\t<requestFiltering>\n\t\t\t\t<denyUrlSequences>\n\t\t\t\t\t<add sequence=\"/\" />\n\t\t\t\t</denyUrlSequences>\n\t\t\t</requestFiltering>\n\t\t</security>\n\t</system.webServer>\n</configuration>\n";
+	}
+
+	/**
+	 * Write the deny files into an existing directory (idempotent).
+	 *
+	 * @param string $dir Absolute directory path.
+	 */
+	public static function protect_dir( string $dir ): void {
+		$files = array(
+			'.htaccess'  => self::htaccess_deny_rules(),
+			'web.config' => self::web_config_deny_rules(),
+			'index.php'  => "<?php // Silence is golden.\n",
+			'index.html' => '',
+		);
+		foreach ( $files as $name => $body ) {
+			if ( ! is_file( $dir . '/' . $name ) ) {
+				@file_put_contents( $dir . '/' . $name, $body ); // phpcs:ignore
+			}
+		}
+	}
+
+	/**
+	 * Create (if needed) and return a private directory under uploads.
+	 *
+	 * @param string $slug Store slug.
+	 * @return string|\WP_Error Absolute path.
+	 */
+	public static function private_dir( string $slug ) {
+		$uploads = wp_upload_dir();
+		if ( ! empty( $uploads['error'] ) ) {
+			return new \WP_Error( 'no_uploads', __( 'Uploads directory is unavailable.', 'emcp-tools' ) );
+		}
+		$dir = trailingslashit( $uploads['basedir'] ) . self::private_dir_name( $slug, self::private_dir_token() );
+		if ( ! wp_mkdir_p( $dir ) ) {
+			return new \WP_Error( 'private_dir', __( 'Could not create the private directory.', 'emcp-tools' ) );
+		}
+		self::protect_dir( $dir );
+		return $dir;
+	}
+
+	/**
+	 * Copy a file to a timestamped backup under uploads/emcp-fs-backups-<token>/.
 	 * Returns the backup absolute path, '' if the source doesn't exist yet
 	 * (a create, not an overwrite), or WP_Error on failure.
 	 *
@@ -220,18 +308,9 @@ class EMCP_Tools_Filesystem_Guard {
 		if ( ! is_file( $abs ) ) {
 			return '';
 		}
-		$uploads = wp_upload_dir();
-		if ( ! empty( $uploads['error'] ) ) {
-			return new \WP_Error( 'no_uploads', __( 'Uploads directory is unavailable for backups.', 'emcp-tools' ) );
-		}
-		$dir = trailingslashit( $uploads['basedir'] ) . self::BACKUP_DIR;
-		if ( ! wp_mkdir_p( $dir ) ) {
-			return new \WP_Error( 'backup_dir', __( 'Could not create the backup directory.', 'emcp-tools' ) );
-		}
-		// Block direct web access to backups.
-		if ( ! is_file( $dir . '/.htaccess' ) ) {
-			@file_put_contents( $dir . '/.htaccess', "Require all denied\n" ); // phpcs:ignore
-			@file_put_contents( $dir . '/index.html', '' ); // phpcs:ignore
+		$dir = self::private_dir( self::BACKUP_DIR );
+		if ( is_wp_error( $dir ) ) {
+			return $dir;
 		}
 		$name = self::backup_name( self::to_relative( $abs ), gmdate( 'Ymd-His' ) );
 		$dest = $dir . '/' . $name;
