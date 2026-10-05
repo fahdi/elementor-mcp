@@ -177,8 +177,8 @@ class EMCP_Tools_Database_Abilities {
 		if ( is_wp_error( $table ) ) {
 			return $table;
 		}
-		if ( EMCP_Tools_Database_Guard::is_protected( $table ) ) {
-			return new \WP_Error( 'protected_table', __( 'Writes to this table are not allowed.', 'emcp-tools' ) );
+		if ( EMCP_Tools_Database_Guard::is_write_protected( $table ) ) {
+			return new \WP_Error( 'protected_table', __( 'Raw writes to this table are not allowed (user, options and network tables). Use the dedicated option/user tools instead.', 'emcp-tools' ) );
 		}
 		global $wpdb;
 		$ok = $wpdb->insert( $table, $data );
@@ -211,8 +211,8 @@ class EMCP_Tools_Database_Abilities {
 		if ( is_wp_error( $table ) ) {
 			return $table;
 		}
-		if ( EMCP_Tools_Database_Guard::is_protected( $table ) ) {
-			return new \WP_Error( 'protected_table', __( 'Writes to this table are not allowed.', 'emcp-tools' ) );
+		if ( EMCP_Tools_Database_Guard::is_write_protected( $table ) ) {
+			return new \WP_Error( 'protected_table', __( 'Raw writes to this table are not allowed (user, options and network tables). Use the dedicated option/user tools instead.', 'emcp-tools' ) );
 		}
 		$before = EMCP_Tools_Database_Guard::before_image( $table, $where );
 		global $wpdb;
@@ -245,8 +245,8 @@ class EMCP_Tools_Database_Abilities {
 		if ( is_wp_error( $table ) ) {
 			return $table;
 		}
-		if ( EMCP_Tools_Database_Guard::is_protected( $table ) ) {
-			return new \WP_Error( 'protected_table', __( 'Writes to this table are not allowed.', 'emcp-tools' ) );
+		if ( EMCP_Tools_Database_Guard::is_write_protected( $table ) ) {
+			return new \WP_Error( 'protected_table', __( 'Raw writes to this table are not allowed (user, options and network tables). Use the dedicated option/user tools instead.', 'emcp-tools' ) );
 		}
 		$before = EMCP_Tools_Database_Guard::before_image( $table, $where );
 		global $wpdb;
