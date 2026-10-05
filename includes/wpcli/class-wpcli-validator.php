@@ -29,10 +29,18 @@ class EMCP_Tools_WPCLI_Validator {
 	/** `command subcommand` pairs that are never allowed. */
 	const BLOCKED_SUBCOMMANDS = array(
 		'db query', 'db cli', 'db import', 'db export', 'db reset', 'db drop', 'db clean',
-		'config set', 'config delete', 'config edit',
+		'config set', 'config delete', 'config edit', 'config create', 'config shuffle-salts',
 		'package install', 'package update', 'package uninstall',
-		'cli update', 'cli cmd-dump', 'cli info',
+		'cli update', 'cli cmd-dump', 'cli info', 'cli alias',
 	);
+
+	/**
+	 * `command subcommand` pairs whose positional arguments may name a code
+	 * source. A wordpress.org slug is fine; a URL or a .zip path installs
+	 * arbitrary code from wherever the caller points, which is remote code
+	 * execution regardless of the `eval` block above.
+	 */
+	const SOURCE_SUBCOMMANDS = array( 'plugin install', 'theme install', 'core update', 'core download' );
 
 	/**
 	 * Global flags that are refused wherever they appear: they load arbitrary
@@ -89,8 +97,47 @@ class EMCP_Tools_WPCLI_Validator {
 			/* translators: %s: the refused command + subcommand */
 			return new \WP_Error( 'wpcli_blocked', sprintf( __( 'The command "wp %s" is not allowed for security reasons.', 'emcp-tools' ), $cmd . ' ' . $sub ) );
 		}
+		// `wp @alias ...` retargets execution (aliases carry --ssh/--http/--path).
+		if ( '' !== $cmd && '@' === $cmd[0] ) {
+			return new \WP_Error( 'wpcli_blocked', __( 'Running commands through a WP-CLI alias is not allowed for security reasons.', 'emcp-tools' ) );
+		}
+		if ( '' !== $sub && in_array( $cmd . ' ' . $sub, self::source_subcommands(), true ) ) {
+			foreach ( array_slice( $positional, 2 ) as $arg ) {
+				if ( self::is_remote_or_archive_source( $arg ) ) {
+					/* translators: %s: the refused command + subcommand */
+					return new \WP_Error( 'wpcli_blocked_source', sprintf( __( '"wp %s" may only install from the wordpress.org directory by slug; URLs and .zip files are not allowed.', 'emcp-tools' ), $cmd . ' ' . $sub ) );
+				}
+			}
+		}
 
 		return $tokens;
+	}
+
+	/**
+	 * Whether a positional install argument points at a URL or an archive
+	 * rather than a wordpress.org slug.
+	 *
+	 * @param string $arg Positional argument.
+	 * @return bool
+	 */
+	public static function is_remote_or_archive_source( string $arg ): bool {
+		$arg = strtolower( trim( $arg ) );
+		if ( '' === $arg ) {
+			return false;
+		}
+		if ( preg_match( '#^[a-z][a-z0-9+.-]*://#', $arg ) ) {
+			return true;
+		}
+		if ( preg_match( '/\.(zip|tar|gz|tgz|phar)$/', $arg ) ) {
+			return true;
+		}
+		// A path (relative or absolute) is never a directory slug.
+		return false !== strpos( $arg, '/' ) || false !== strpos( $arg, '\\' );
+	}
+
+	/** Install-from-source subcommands, filterable. @return string[] */
+	public static function source_subcommands(): array {
+		return array_map( 'strtolower', (array) apply_filters( 'emcp_tools_wpcli_source_subcommands', self::SOURCE_SUBCOMMANDS ) );
 	}
 
 	/** Blocked commands, filterable. @return string[] */
