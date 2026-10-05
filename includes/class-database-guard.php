@@ -268,6 +268,40 @@ class EMCP_Tools_Database_Guard {
 	}
 
 	/**
+	 * Tables the raw write tools (insert-row / update-rows / delete-rows) refuse.
+	 *
+	 * Superset of the read-protected list. A single row change in wp_options
+	 * (active_plugins, default_role + users_can_register, siteurl, admin_email)
+	 * or in the network tables (sitemeta, signups) is a site takeover, so raw
+	 * writes there are refused by default; the dedicated option / user tools
+	 * stay the sanctioned path. Reads are unaffected. Filter:
+	 * emcp_tools_db_write_protected_tables.
+	 *
+	 * @return string[]
+	 */
+	public static function write_protected_tables(): array {
+		global $wpdb;
+		$protected = (array) apply_filters( 'emcp_tools_db_protected_tables', array( $wpdb->users, $wpdb->usermeta ) );
+		foreach ( array( 'options', 'sitemeta', 'signups', 'blogs', 'site' ) as $prop ) {
+			if ( ! empty( $wpdb->{$prop} ) ) {
+				$protected[] = (string) $wpdb->{$prop};
+			}
+		}
+		$protected = array_values( array_unique( array_filter( array_map( 'strval', $protected ) ) ) );
+		return array_values( (array) apply_filters( 'emcp_tools_db_write_protected_tables', $protected ) );
+	}
+
+	/**
+	 * Whether raw writes to $table are refused.
+	 *
+	 * @param string $table
+	 * @return bool
+	 */
+	public static function is_write_protected( string $table ): bool {
+		return self::table_is_protected( $table, self::write_protected_tables() );
+	}
+
+	/**
 	 * Pure: does a read-only $sql reference any of $tables as a real identifier?
 	 *
 	 * Comments and string literals are stripped (so `'wp_users'` in a literal is
