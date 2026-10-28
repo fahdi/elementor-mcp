@@ -56,7 +56,7 @@ As of v3.0.0 the 62 per-widget tools were folded into a catalog-backed model, so
 
 * WordPress 6.9 or later
 * WordPress Abilities API: included in WordPress core 6.9+
-* WordPress MCP Adapter: bundled with the plugin (no separate install needed; an active standalone MCP Adapter plugin is used instead when present)
+* MCP Adapter: the free plugin from WordPress.org (https://wordpress.org/plugins/mcp-adapter/) is recommended; EMCP Tools offers to install and activate it in one click, and uses a built-in copy until then.
 
 **Recommended (optional):**
 
@@ -71,7 +71,7 @@ As of v3.0.0 the 62 per-widget tools were folded into a catalog-backed model, so
 == Installation ==
 
 1. Upload the `emcp-tools` folder to `/wp-content/plugins/`.
-2. Activate the plugin through the 'Plugins' menu in WordPress. The MCP Adapter is bundled. No separate install is required (WordPress 6.9+ already includes the Abilities API).
+2. Activate the plugin through the 'Plugins' menu in WordPress. A notice offers to install and activate the MCP Adapter plugin in one click; until then EMCP Tools uses its built-in copy (WordPress 6.9+ already includes the Abilities API).
 3. Open the new **EMCP Tools** top-level menu and go to **Connection**. The MCP server and the **Abilities API** switch (under **Advanced settings**) are on by default. Follow the four steps to connect your AI client; the last step confirms its first call.
 4. (Optional) Install and activate [Elementor](https://wordpress.org/plugins/elementor/) (version 3.20+) to enable the Elementor tool family (page design, widgets, layout, templates, brand kits, and more). All beyond-Elementor tools are fully functional without it.
 
@@ -162,7 +162,7 @@ Yes. Open the **EMCP Tools** top-level admin menu and use the **Tools** screen t
 
 = Does this plugin require the WordPress MCP Adapter? =
 
-Yes. The MCP Adapter handles the MCP protocol transport layer. This plugin registers its tools through the Adapter's server infrastructure.
+Yes. The MCP Adapter handles the MCP protocol transport layer, and this plugin registers its tools through it. It is a free plugin on WordPress.org: EMCP Tools shows a notice with a button that installs and activates it, and uses a built-in copy until then. A future version will need the plugin.
 
 = What does EMCP Tools store in the database? =
 
@@ -238,6 +238,7 @@ Incident-response tools for a hacked site, contributed by @Mrshahidali420, a swi
 * Fixed: upload-svg-icon is now recorded in History and can be undone.
 * Fixed: OAuth sign-in works on the subsites of a subdirectory multisite.
 * Fixed: the Connection wizard shows ChatGPT's current MCP settings path and a Codex command that Codex accepts.
+* Changed: EMCP Tools uses the official MCP Adapter plugin from WordPress.org when it is active, so plugins that need MCP Adapter 0.7 work next to it and WordPress no longer reports a duplicate copy. Its built-in copy, updated to 0.7.1, keeps connections working until then; a notice installs and activates the official plugin in one click.
 * Fixed: Cloud Safe Updates handles many more sites: database checks and large tables in small checked pieces, exact restores of BIT, FLOAT, ENUM and SET values, cleanup of tables a failed update added, and support for WP Rocket and 10Web Booster page caches.
 * Fixed: Image Optimization's WebP copies were no smaller than the JPEGs. WebP is now made from the original at its own quality (automatic: 15 below Quality), and on sample photos is 15% smaller than the JPEG.
 * Fixed: Cached pages showed JPEG or WebP to everyone depending on the first visitor. With "Serve WebP on the site" on, every visitor gets WebP, and Elementor's cache is flushed when the module or its WebP settings change and after a bulk run.

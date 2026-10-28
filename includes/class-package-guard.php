@@ -42,7 +42,9 @@ class EMCP_Tools_Package_Guard {
 		// Hardcoded core list — ALWAYS enforced. The filter can only ADD to it,
 		// never remove an entry (a malicious plugin must not be able to empty the
 		// list and then deactivate/delete Elementor or EMCP Tools itself).
-		$core = array( 'elementor/elementor.php', 'elementor-pro/elementor-pro.php' );
+		// The MCP Adapter carries the MCP server itself: an agent that switched
+		// it off would cut its own connection.
+		$core = array( 'elementor/elementor.php', 'elementor-pro/elementor-pro.php', 'mcp-adapter/mcp-adapter.php' );
 		if ( defined( 'EMCP_TOOLS_BASENAME' ) ) {
 			$core[] = EMCP_TOOLS_BASENAME;
 		}

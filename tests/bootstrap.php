@@ -238,6 +238,31 @@ function admin_url( $path = '' ): string {
 	return 'http://example.test/wp-admin/' . $path;
 }
 
+if ( ! function_exists( 'self_admin_url' ) ) {
+	function self_admin_url( $path = '' ): string {
+		return admin_url( $path );
+	}
+}
+
+if ( ! function_exists( 'network_admin_url' ) ) {
+	function network_admin_url( $path = '' ): string {
+		return 'http://example.test/wp-admin/network/' . $path;
+	}
+}
+
+if ( ! function_exists( 'add_query_arg' ) ) {
+	function add_query_arg( $key, $value = null, $url = '' ): string {
+		$url = (string) $url;
+		return $url . ( false === strpos( $url, '?' ) ? '?' : '&' ) . rawurlencode( (string) $key ) . '=' . rawurlencode( (string) $value );
+	}
+}
+
+if ( ! function_exists( 'wp_nonce_url' ) ) {
+	function wp_nonce_url( $url, $action = -1 ): string {
+		return add_query_arg( '_wpnonce', 'nonce', $url );
+	}
+}
+
 function home_url( $path = '' ): string {
 	// Overridable per test (e.g. a subdirectory install) via the fixture global;
 	// defaults to the root host so existing tests are unaffected.

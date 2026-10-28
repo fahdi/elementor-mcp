@@ -202,6 +202,7 @@ final class EMCP_Tools_Admin_Connection_Data {
 		return array(
 			'adapter'       => class_exists( 'EMCP_Tools_Adapter_Bootstrap' ) ? EMCP_Tools_Adapter_Bootstrap::source() : 'none',
 			'adapterCopy'   => class_exists( 'EMCP_Tools_Adapter_Bootstrap' ) && method_exists( 'EMCP_Tools_Adapter_Bootstrap', 'core_source' ) ? array_intersect_key( EMCP_Tools_Adapter_Bootstrap::core_source(), array( 'plugin' => 1, 'version' => 1, 'ours' => 1 ) ) : null,
+			'adapterAction' => self::adapter_action(),
 			'abilitiesApi'  => function_exists( 'wp_register_ability' ),
 			'serverEnabled' => '1' === (string) get_option( 'emcp_tools_server_enabled', '1' ),
 			'toolsEnabled'  => $this->admin->get_enabled_tool_count(),
@@ -345,6 +346,30 @@ final class EMCP_Tools_Admin_Connection_Data {
 			'account'     => EMCP_Tools_Cloud::redact_email( (string) ( $connection['account_email'] ?? '' ) ),
 			'host'        => (string) wp_parse_url( $base_url, PHP_URL_HOST ),
 			'connectedAt' => $at > 0 ? gmdate( 'Y-m-d', $at ) : '',
+		);
+	}
+
+	/**
+	 * The install/activate button for the official MCP Adapter, when one is needed
+	 * and the user may use it.
+	 *
+	 * @return array{label: string, url: string}|null
+	 */
+	private static function adapter_action(): ?array {
+		if ( ! class_exists( 'EMCP_Tools_Adapter_Bootstrap' ) ) {
+			return null;
+		}
+		if ( ! class_exists( 'EMCP_Tools_Adapter_Installer' ) ) {
+			require_once EMCP_TOOLS_DIR . 'includes/class-adapter-installer.php';
+		}
+		$status = EMCP_Tools_Adapter_Bootstrap::status();
+		$banner = EMCP_Tools_Adapter_Installer::banner( $status, EMCP_Tools_Adapter_Bootstrap::is_loaded() );
+		if ( null === $banner || ! EMCP_Tools_Adapter_Installer::can( (string) $status['state'] ) ) {
+			return null;
+		}
+		return array(
+			'label' => $banner['button'],
+			'url'   => html_entity_decode( EMCP_Tools_Adapter_Installer::action_url(), ENT_QUOTES ),
 		);
 	}
 }

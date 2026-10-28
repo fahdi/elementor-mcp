@@ -27,6 +27,10 @@
 /vendor/wordpress/mcp-adapter/*.dist
 /vendor/wordpress/mcp-adapter/phpstan.neon*
 /vendor/wordpress/mcp-adapter/phpcs.xml*
+/vendor/wordpress/mcp-adapter/.wordpress-org/
+/vendor/wordpress/mcp-adapter/bin/
+/vendor/wordpress/php-mcp-schema/docs/
+/vendor/wordpress/php-mcp-schema/resources/
 /vendor/wordpress/php-mcp-schema/tests/
 /vendor/wordpress/php-mcp-schema/generator/
 /vendor/wordpress/php-mcp-schema/.github/
@@ -50,6 +54,7 @@
 /vendor/**/SECURITY*.md
 /vendor/**/CHANGELOG*.md
 /vendor/**/CLAUDE.md
+/vendor/**/AGENTS.md
 /vendor/**/.wp-env*.json
 /vendor/wordpress/mcp-adapter/readme.txt
 /vendor/wordpress/php-mcp-schema/skill/

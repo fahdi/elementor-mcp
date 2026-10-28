@@ -10,7 +10,7 @@ jest.mock( '@wordpress/api-fetch', () => jest.fn() );
 const data = {
 	...setupData,
 	status: {
-		adapter: 'bundled',
+		adapter: 'official',
 		abilitiesApi: true,
 		serverEnabled: true,
 		toolsEnabled: 116,
@@ -100,7 +100,7 @@ describe( 'ConnectionScreen', () => {
 		expect( within( rail ).getByText( data.endpoint ) ).toBeInTheDocument();
 	} );
 
-	it( 'names another plugin whose MCP Adapter copy loads first', () => {
+	it( 'names another plugin copy of the MCP Adapter and offers the official one', () => {
 		window.history.replaceState(
 			{},
 			'',
@@ -113,10 +113,15 @@ describe( 'ConnectionScreen', () => {
 						...data,
 						status: {
 							...data.status,
+							adapter: 'external',
 							adapterCopy: {
 								plugin: 'ameliabooking',
 								version: '0.5.0',
 								ours: false,
+							},
+							adapterAction: {
+								label: 'Install and activate MCP Adapter',
+								url: 'http://example.test/wp-admin/admin-post.php?action=emcp_tools_install_mcp_adapter',
 							},
 						},
 					} }
@@ -125,10 +130,16 @@ describe( 'ConnectionScreen', () => {
 		);
 		const rail = screen.getByRole( 'region', { name: 'Server status' } );
 		expect(
-			within( rail ).getByText(
-				'Bundled, with ameliabooking 0.5.0 loaded first'
-			)
+			within( rail ).getByText( 'Copy from ameliabooking 0.5.0' )
 		).toBeInTheDocument();
+		expect(
+			within( rail ).getByRole( 'link', {
+				name: 'Install and activate MCP Adapter',
+			} )
+		).toHaveAttribute(
+			'href',
+			'http://example.test/wp-admin/admin-post.php?action=emcp_tools_install_mcp_adapter'
+		);
 	} );
 
 	it( 'explains an empty connected apps list', () => {

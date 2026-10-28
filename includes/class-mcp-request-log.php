@@ -221,6 +221,34 @@ class EMCP_Tools_MCP_Request_Log {
 		return ( '' !== $s && false !== strpos( "=+-@\t\r", $s[0] ) ) ? "'" . $s : $s;
 	}
 
+	/**
+	 * Give a recent row with no session the session its response created.
+	 *
+	 * MCP Adapter 0.7 creates the HTTP session after routing, so the router's
+	 * row for `initialize` carries none; the response's Mcp-Session-Id header
+	 * does. Looks at the newest rows only and never overwrites a session.
+	 *
+	 * @param string $method  JSON-RPC method of the row.
+	 * @param string $req_id  JSON-RPC id of the row.
+	 * @param string $session Session id from the response.
+	 * @return bool Whether a row was updated.
+	 */
+	public static function fill_session( string $method, string $req_id, string $session ): bool {
+		$session = self::field( $session );
+		if ( '' === $session ) {
+			return false;
+		}
+		$log = self::all();
+		for ( $i = count( $log ) - 1, $stop = max( 0, $i - 20 ); $i >= $stop; $i-- ) {
+			if ( $method === ( $log[ $i ]['method'] ?? '' ) && $req_id === ( $log[ $i ]['req_id'] ?? '' ) && '' === ( $log[ $i ]['session'] ?? '' ) ) {
+				$log[ $i ]['session'] = $session;
+				update_option( self::OPTION, $log, false );
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/** Clear the log. */
 	public static function clear(): void {
 		update_option( self::OPTION, array(), false );

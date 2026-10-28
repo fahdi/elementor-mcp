@@ -21,7 +21,7 @@
 
 Turn your WordPress site into something an AI agent can actually operate.
 
-EMCP Tools is a WordPress plugin that exposes your site as **[MCP](https://modelcontextprotocol.io/) tools**, so Claude, Cursor, and any other MCP client can build Elementor pages, write content, manage plugins and users, audit performance and security, and drive the plugins you already run. It builds on the [WordPress MCP Adapter](https://github.com/WordPress/mcp-adapter), which ships bundled.
+EMCP Tools is a WordPress plugin that exposes your site as **[MCP](https://modelcontextprotocol.io/) tools**, so Claude, Cursor, and any other MCP client can build Elementor pages, write content, manage plugins and users, audit performance and security, and drive the plugins you already run. It runs on the official [MCP Adapter](https://wordpress.org/plugins/mcp-adapter/) plugin, which EMCP Tools installs and activates for you in one click (a built-in copy serves until then).
 
 <img width="2331" height="1399" alt="emc-dashboard" src="https://github.com/user-attachments/assets/e939408d-7005-4c0f-b157-fdb353d4c0c6" />
 
@@ -57,7 +57,7 @@ Elementor is **optional**. Every WordPress domain works without it; installing E
 
 Free installs update in place from **Dashboard → Updates**.
 
-**Requires** WordPress 6.9+ and PHP 8.1+. Elementor 3.20+ is optional (4.0+ for atomic elements). The MCP Adapter and Abilities API need no separate install.
+**Requires** WordPress 6.9+ and PHP 8.1+. Elementor 3.20+ is optional (4.0+ for atomic elements). The free [MCP Adapter](https://wordpress.org/plugins/mcp-adapter/) plugin is recommended (EMCP Tools offers a one-click install and uses a built-in copy until then); the Abilities API is in WordPress core.
 
 → [Installation guide](https://emcptools.com/docs/getting-started/installation/) · [Requirements](https://emcptools.com/docs/getting-started/requirements/)
 

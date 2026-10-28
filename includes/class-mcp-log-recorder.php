@@ -100,10 +100,37 @@ final class EMCP_Tools_MCP_Log_Recorder {
 			if ( ! $anonymous ) {
 				EMCP_Tools_Activity_Stats::record( 'tools/call' === $row['method'] ? $row['tool'] : '', 'error' === $row['status'] );
 			}
+		} elseif ( EMCP_Tools_Request_Context::was_logged() ) {
+			self::fill_initialize_session( $response, $body );
 		}
 		self::$start = null;
 		self::$body  = '';
 		return $response;
+	}
+
+	/**
+	 * MCP Adapter 0.7 creates the session after routing: copy it from the
+	 * response header onto the router's `initialize` row.
+	 *
+	 * @param mixed  $response WP_REST_Response or WP_Error.
+	 * @param string $body     Raw request body.
+	 */
+	private static function fill_initialize_session( $response, string $body ): void {
+		if ( ! is_object( $response ) || ! method_exists( $response, 'get_headers' ) ) {
+			return;
+		}
+		$session = '';
+		foreach ( (array) $response->get_headers() as $name => $value ) {
+			if ( 'mcp-session-id' === strtolower( (string) $name ) ) {
+				$session = is_scalar( $value ) ? (string) $value : '';
+			}
+		}
+		$message = json_decode( $body, true );
+		if ( '' === $session || ! is_array( $message ) || 'initialize' !== ( $message['method'] ?? '' ) ) {
+			return;
+		}
+		$id = $message['id'] ?? '';
+		EMCP_Tools_MCP_Request_Log::fill_session( 'initialize', is_scalar( $id ) ? (string) $id : '', $session );
 	}
 
 	/**

@@ -167,14 +167,12 @@ define( 'EMCP_TOOLS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'EMCP_TOOLS_URL', plugin_dir_url( __FILE__ ) );
 define( 'EMCP_TOOLS_BASENAME', plugin_basename( __FILE__ ) );
 
-// Claim the WP\MCP namespace for our bundled MCP Adapter copy, at file-load —
-// BEFORE any other plugin can autoload an adapter class. Other plugins bundle
-// the adapter behind their own autoloaders (Rank Math SEO, …) and PHP allows
-// only one class of a given name per request, so without this the namespace
-// can shear across two adapter versions and the MCP session dies mid-request
-// ("Session terminated", -32600). Lazy: registers a resolver, loads nothing.
+// While the official MCP Adapter plugin is active, serve the whole WP\MCP
+// namespace from it, at file load, before another plugin's bundled copy can
+// answer for part of it (a mixed copy kills the MCP session, #99). Lazy:
+// registers a resolver, loads nothing.
 require_once EMCP_TOOLS_DIR . 'includes/class-mcp-adapter-bootstrap.php';
-EMCP_Tools_Adapter_Bootstrap::preload_bundled_namespace();
+EMCP_Tools_Adapter_Bootstrap::preload_namespace();
 
 if ( ! function_exists( 'emcp_tools_fs_guard_main_file' ) ) {
 	/**

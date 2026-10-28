@@ -193,45 +193,57 @@ final class EMCP_Tools_Attention_Cloud extends EMCP_Tools_Attention_Base {
 }
 
 /**
- * Another plugin's copy of the MCP Adapter answers for the core class (Amelia loads its bundled
- * 0.5.0 McpAdapter before EMCP boots). EMCP keeps working, but the mix depends on the two copies
- * staying compatible, so the Dashboard names the plugin.
+ * The official MCP Adapter plugin is missing, inactive or too old (or EMCP runs
+ * on another plugin's bundled copy). Same states and wording as the banner of
+ * EMCP_Tools_Adapter_Installer, with the same one-click action.
  */
 final class EMCP_Tools_Adapter_Attention extends EMCP_Tools_Attention_Base {
 
-	/** @var array|null core_source() for tests. */
-	private $source;
+	/** @var array|null EMCP_Tools_Adapter_Bootstrap::status() for tests. */
+	private $status;
 
-	public function __construct( ?array $source = null ) {
-		$this->source = $source;
+	/** @var bool|null Whether any adapter copy is loaded, for tests. */
+	private $loaded;
+
+	public function __construct( ?array $status = null, ?bool $loaded = null ) {
+		$this->status = $status;
+		$this->loaded = $loaded;
 	}
 
-	private function source(): array {
-		if ( null === $this->source ) {
-			$this->source = EMCP_Tools_Adapter_Bootstrap::core_source();
+	private function status(): array {
+		if ( null === $this->status ) {
+			$this->status = EMCP_Tools_Adapter_Bootstrap::status();
 		}
-		return $this->source;
+		return $this->status;
+	}
+
+	private function banner(): ?array {
+		if ( ! class_exists( 'EMCP_Tools_Adapter_Installer' ) ) {
+			require_once EMCP_TOOLS_DIR . 'includes/class-adapter-installer.php';
+		}
+		$loaded = null === $this->loaded ? EMCP_Tools_Adapter_Bootstrap::is_loaded() : $this->loaded;
+		return EMCP_Tools_Adapter_Installer::banner( $this->status(), $loaded );
 	}
 
 	public function id(): string {
-		return 'mcp-adapter-foreign';
+		return 'mcp-adapter';
 	}
 
 	public function applies(): bool {
-		$s = $this->source();
-		return empty( $s['ours'] ) && '' !== (string) ( $s['plugin'] ?? '' );
+		return null !== $this->banner();
 	}
 
 	public function state(): string {
-		$s = $this->source();
-		return (string) $s['plugin'] . '@' . (string) $s['version'];
+		$s = $this->status();
+		return (string) $s['state'] . '@' . (string) $s['version'] . '@' . (string) ( $s['plugin'] ?? '' );
 	}
 
 	public function item(): array {
-		$s   = $this->source();
-		$url = class_exists( 'EMCP_Tools_Admin' ) ? self::url( '-connection' ) : admin_url( 'admin.php?page=emcp-tools-connection' );
-		/* translators: 1: plugin folder, 2: its adapter version, 3: EMCP's bundled version. */
-		$body = sprintf( __( 'The plugin %1$s loads its own MCP Adapter %2$s before EMCP, so part of EMCP\'s server runs on that copy instead of the bundled %3$s. Connections work today; if they start failing after an update of either plugin, this is the first thing to check.', 'emcp-tools' ), (string) $s['plugin'], '' !== (string) $s['version'] ? (string) $s['version'] : '?', EMCP_Tools_Adapter_Bootstrap::bundled_version() );
-		return $this->make( 'warning', 'plug', __( 'Another plugin\'s MCP Adapter is loaded', 'emcp-tools' ), $body, __( 'Open Connection', 'emcp-tools' ), $url );
+		$b   = (array) $this->banner();
+		$url = EMCP_Tools_Adapter_Installer::can( (string) $this->status()['state'] ) ? EMCP_Tools_Adapter_Installer::action_url() : self_admin_url( 'plugin-install.php?s=mcp-adapter&tab=search&type=term' );
+		$type     = (string) ( $b['type'] ?? 'info' );
+		$severity = array( 'error' => 'danger', 'warning' => 'warning' )[ $type ] ?? 'info';
+		$title    = 'error' === $type ? __( 'MCP Adapter is needed', 'emcp-tools' ) : __( 'Install the official MCP Adapter', 'emcp-tools' );
+		return $this->make( $severity, 'plug', $title, (string) ( $b['message'] ?? '' ), (string) ( $b['button'] ?? '' ), $url );
 	}
 }

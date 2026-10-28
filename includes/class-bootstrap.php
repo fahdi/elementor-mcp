@@ -103,11 +103,16 @@ class EMCP_Tools_Bootstrap {
 		// legacy guard while the old plugin is still present). Idempotent.
 		EMCP_Tools_Migration::migrate();
 
-		// Make the MCP Adapter available (active standalone plugin, else our
-		// bundled copy) BEFORE the dependency check, so the adapter is never a
-		// "go install this" blocker. The Abilities API is core in WP 6.9+/7.0.
+		// Boot the MCP Adapter: the official plugin when active, else EMCP's
+		// bundled fallback copy. The banner recommends the official plugin.
+		// Even with no adapter at all EMCP still loads; only the MCP server is
+		// missing.
 		require_once EMCP_TOOLS_DIR . 'includes/class-mcp-adapter-bootstrap.php';
 		EMCP_Tools_Adapter_Bootstrap::ensure();
+		if ( is_admin() ) {
+			require_once EMCP_TOOLS_DIR . 'includes/class-adapter-installer.php';
+			EMCP_Tools_Adapter_Installer::init();
+		}
 
 		if ( ! self::check_dependencies() ) {
 			return;
@@ -800,12 +805,8 @@ class EMCP_Tools_Bootstrap {
 			$missing[] = 'WordPress Abilities API (requires WordPress 6.9+)';
 		}
 
-		// MCP Adapter: bundled with the plugin (EMCP_Tools_Adapter_Bootstrap::ensure()
-		// ran above). Only fails if the bundled source is missing/corrupt, a
-		// broken build, not a user action.
-		if ( ! class_exists( '\WP\MCP\Core\McpAdapter' ) ) {
-			$missing[] = 'WordPress MCP Adapter (bundled, reinstall the plugin if this persists)';
-		}
+		// The MCP Adapter is not a requirement here: EMCP bundles a fallback copy,
+		// and without any copy EMCP still loads and offers to install it.
 
 		if ( ! empty( $missing ) ) {
 			add_action(

@@ -61,9 +61,10 @@ export function ServerRail( { data, apps, setApps, onSaved = () => {} } ) {
 		'none' !== status.adapter;
 	const copy = status.adapterCopy;
 	const adapterLabel = {
-		bundled: __( 'Bundled', 'emcp-tools' ),
-		external: __( 'External', 'emcp-tools' ),
-		none: __( 'Missing', 'emcp-tools' ),
+		official: __( 'Active', 'emcp-tools' ),
+		bundled: __( 'Built-in copy', 'emcp-tools' ),
+		external: __( 'Copy from another plugin', 'emcp-tools' ),
+		none: __( 'Not installed', 'emcp-tools' ),
 	}[ status.adapter ];
 	const rows = [
 		[
@@ -75,14 +76,13 @@ export function ServerRail( { data, apps, setApps, onSaved = () => {} } ) {
 			__( 'MCP Adapter', 'emcp-tools' ),
 			copy && ! copy.ours && copy.plugin
 				? sprintf(
-						/* translators: 1: Bundled or External, 2: plugin folder, 3: its adapter version. */
-						__( '%1$s, with %2$s %3$s loaded first', 'emcp-tools' ),
-						adapterLabel,
+						/* translators: 1: plugin folder, 2: its adapter version. */
+						__( 'Copy from %1$s %2$s', 'emcp-tools' ),
 						copy.plugin,
 						copy.version || '?'
 					)
 				: adapterLabel,
-			'none' !== status.adapter,
+			'official' === status.adapter,
 		],
 		[
 			__( 'MCP Server', 'emcp-tools' ),
@@ -173,6 +173,16 @@ export function ServerRail( { data, apps, setApps, onSaved = () => {} } ) {
 							</li>
 						) ) }
 					</ul>
+					{ status.adapterAction && (
+						<p>
+							<Button
+								variant="primary"
+								href={ status.adapterAction.url }
+							>
+								{ status.adapterAction.label }
+							</Button>
+						</p>
+					) }
 					<CopyField
 						value={ data.endpoint }
 						label={ __( 'MCP endpoint', 'emcp-tools' ) }

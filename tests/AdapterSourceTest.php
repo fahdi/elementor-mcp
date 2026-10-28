@@ -1,8 +1,8 @@
 <?php
 /**
- * Which plugin's MCP Adapter copy is loaded (spec D3 of the Amelia integration): another plugin
- * (Amelia bundles 0.5.0 behind its own autoloader and loads McpAdapter before EMCP) can answer
- * first, and the Connection screen and Dashboard say so.
+ * Which plugin's MCP Adapter copy is loaded. EMCP runs on the official MCP Adapter plugin; when
+ * another plugin's bundled copy answers instead (Elementor, WooCommerce, Amelia), the Connection
+ * screen names it and the Dashboard asks for the official plugin.
  *
  * @package EMCP_Tools\Tests
  */
@@ -17,36 +17,47 @@ final class AdapterSourceTest extends TestCase {
 
 	const PLUGINS = 'F:/site/wp-content/plugins';
 
-	public function test_our_bundled_copy_is_ours(): void {
-		$s = EMCP_Tools_Adapter_Bootstrap::source_from_file( self::PLUGINS . '/elementor-mcp/vendor/wordpress/mcp-adapter/includes/Core/McpAdapter.php', self::PLUGINS, self::PLUGINS . '/elementor-mcp/vendor/wordpress/mcp-adapter/includes/', '0.6.1' );
-		$this->assertSame( array( 'file' => 'elementor-mcp/vendor/wordpress/mcp-adapter/includes/Core/McpAdapter.php', 'version' => '0.6.1', 'ours' => true, 'plugin' => 'elementor-mcp' ), $s );
+	public function test_the_chosen_copy_is_ours(): void {
+		$s = EMCP_Tools_Adapter_Bootstrap::source_from_file( self::PLUGINS . '/mcp-adapter/includes/Core/McpAdapter.php', self::PLUGINS, self::PLUGINS . '/mcp-adapter/includes/', '0.7.1' );
+		$this->assertSame( array( 'file' => 'mcp-adapter/includes/Core/McpAdapter.php', 'version' => '0.7.1', 'ours' => true, 'plugin' => 'mcp-adapter' ), $s );
 	}
 
 	public function test_another_plugin_copy_names_the_plugin_and_version(): void {
-		$s = EMCP_Tools_Adapter_Bootstrap::source_from_file( 'F:\\site\\wp-content\\plugins\\ameliabooking\\vendor\\wordpress\\mcp-adapter\\includes\\Core\\McpAdapter.php', self::PLUGINS, self::PLUGINS . '/elementor-mcp/vendor/wordpress/mcp-adapter/includes/', '0.5.0' );
+		$s = EMCP_Tools_Adapter_Bootstrap::source_from_file( 'F:\\site\\wp-content\\plugins\\ameliabooking\\vendor\\wordpress\\mcp-adapter\\includes\\Core\\McpAdapter.php', self::PLUGINS, self::PLUGINS . '/mcp-adapter/includes/', '0.5.0' );
 		$this->assertSame( array( false, 'ameliabooking', '0.5.0' ), array( $s['ours'], $s['plugin'], $s['version'] ) );
 		$this->assertSame( '', EMCP_Tools_Adapter_Bootstrap::source_from_file( '', self::PLUGINS, '', '' )['plugin'] );
+		$this->assertFalse( EMCP_Tools_Adapter_Bootstrap::source_from_file( self::PLUGINS . '/elementor/vendor/x.php', self::PLUGINS, '', '0.6.1' )['ours'], 'nothing is ours without the official plugin' );
 	}
 
-	public function test_the_bundled_version_is_read_from_the_bundled_file(): void {
-		$this->assertSame( '0.6.1', EMCP_Tools_Adapter_Bootstrap::bundled_version() );
-	}
+	public function test_the_attention_item_follows_the_adapter_state(): void {
+		$ok = new EMCP_Tools_Adapter_Attention( array( 'state' => 'ok', 'installed' => true, 'version' => '0.7.1', 'plugin' => '' ), true );
+		$this->assertFalse( $ok->applies() );
 
-	public function test_the_attention_item_shows_only_for_another_plugin_copy(): void {
-		$ours = new EMCP_Tools_Adapter_Attention( array( 'file' => 'x', 'version' => '0.6.1', 'ours' => true, 'plugin' => 'elementor-mcp' ) );
-		$this->assertFalse( $ours->applies() );
-		$none = new EMCP_Tools_Adapter_Attention( array( 'file' => '', 'version' => '', 'ours' => false, 'plugin' => '' ) );
-		$this->assertFalse( $none->applies() );
-		$a = new EMCP_Tools_Adapter_Attention( array( 'file' => 'ameliabooking/vendor/x.php', 'version' => '0.5.0', 'ours' => false, 'plugin' => 'ameliabooking' ) );
-		$this->assertTrue( $a->applies() );
-		$this->assertSame( 'mcp-adapter-foreign', $a->id() );
-		$this->assertSame( 'ameliabooking@0.5.0', $a->state() );
-		$b = new EMCP_Tools_Adapter_Attention( array( 'file' => 'ameliabooking/vendor/x.php', 'version' => '0.5.1', 'ours' => false, 'plugin' => 'ameliabooking' ) );
-		$this->assertNotSame( $a->state(), $b->state() );
-		$item = $a->item();
-		$this->assertStringContainsString( 'ameliabooking', $item['body'] );
-		$this->assertStringContainsString( '0.5.0', $item['body'] );
-		$this->assertStringNotContainsString( "\u{2014}", $item['title'] . $item['body'] . $item['action_label'] );
-		$this->assertSame( 'warning', $item['severity'] );
+		$missing = new EMCP_Tools_Adapter_Attention( array( 'state' => 'missing', 'installed' => false, 'version' => '', 'plugin' => '' ), false );
+		$this->assertTrue( $missing->applies() );
+		$this->assertSame( 'mcp-adapter', $missing->id() );
+		$item = $missing->item();
+		$this->assertSame( 'danger', $item['severity'], 'no adapter at all: the MCP server is off' );
+		$this->assertSame( 'Install and activate MCP Adapter', $item['action_label'] );
+
+		$fallback = new EMCP_Tools_Adapter_Attention( array( 'state' => 'missing', 'installed' => false, 'version' => '0.7.1', 'plugin' => '' ), true );
+		$this->assertSame( 'info', $fallback->item()['severity'], 'the built-in copy serves: a recommendation' );
+
+		$old = new EMCP_Tools_Adapter_Attention( array( 'state' => 'old', 'installed' => true, 'version' => '0.5.0', 'plugin' => '' ), true );
+		$this->assertSame( 'warning', $old->item()['severity'] );
+
+		$other = new EMCP_Tools_Adapter_Attention( array( 'state' => 'missing', 'installed' => false, 'version' => '0.5.0', 'plugin' => 'ameliabooking' ), true );
+		$this->assertTrue( $other->applies() );
+		$this->assertSame( 'info', $other->item()['severity'] );
+		$this->assertStringContainsString( 'ameliabooking', $other->item()['body'] );
+		$this->assertNotSame( $missing->state(), $other->state() );
+
+		$inactive = new EMCP_Tools_Adapter_Attention( array( 'state' => 'inactive', 'installed' => true, 'version' => '', 'plugin' => '' ), false );
+		$this->assertSame( 'Activate MCP Adapter', $inactive->item()['action_label'] );
+
+		foreach ( array( $missing, $other, $inactive ) as $check ) {
+			$i = $check->item();
+			$this->assertStringNotContainsString( "\u{2014}", $i['title'] . $i['body'] . $i['action_label'] );
+		}
 	}
 }
