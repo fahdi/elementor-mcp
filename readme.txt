@@ -3,7 +3,7 @@ Contributors: mianshahzadraza
 Tags: elementor, mcp, ai, page-builder, automation
 Requires at least: 6.9
 Tested up to: 7.1
-Stable tag: 3.21.0
+Stable tag: 3.21.1
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -218,6 +218,15 @@ EMCP Tools works on your own site. It contacts the services below only in the si
 2. Connection configuration page with copy-paste configs.
 
 == Changelog ==
+
+= 3.21.1 =
+
+Ten native plugin integrations with guarded writes, History recovery and verified plugin compatibility.
+
+* New: Free integrations for LiteSpeed Cache, Redirection, WP Mail SMTP, Custom Post Type UI, Wordfence and Pods. Wordfence is read-only; LiteSpeed cache invalidation requires a supported server.
+* New in Pro: FluentSMTP, Flamingo, Site Kit and Ultimate Member. Site Kit reads local setup, authentication and module state.
+* New write tools start disabled. Enable them explicitly on the Tools screen.
+* Improved: Native write verification, conflict-aware undo, partial-write recovery, nested sensitive-field filtering and mail-test receipts that prevent accidental replay.
 
 = 3.21.0 =
 

@@ -400,6 +400,30 @@ trait EMCP_Tools_Admin_Settings_Trait {
 			$add[] = 'emcp-tools/list-processes';
 			$add[] = 'emcp-tools/kill-process';
 		}
+		if ( $applied < 66 ) {
+			$add[] = 'emcp-tools/redirection-write';
+		}
+		if ( $applied < 67 ) {
+			$add[] = 'emcp-tools/cptui-write';
+		}
+		if ( $applied < 73 ) {
+			$add[] = 'emcp-tools/ultimate-member-write';
+		}
+		if ( $applied < 72 ) {
+			$add[] = 'emcp-tools/litespeed-write';
+		}
+		if ( $applied < 71 ) {
+			$add[] = 'emcp-tools/flamingo-write';
+		}
+		if ( $applied < 70 ) {
+			$add[] = 'emcp-tools/fluentsmtp-write';
+		}
+		if ( $applied < 69 ) {
+			$add[] = 'emcp-tools/wp-mail-smtp-write';
+		}
+		if ( $applied < 68 ) {
+			$add[] = 'emcp-tools/pods-write';
+		}
 		return array(
 			'add'   => array_values( array_unique( $add ) ),
 			'strip' => array_values( array_unique( $strip ) ),
