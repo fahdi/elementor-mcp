@@ -2,7 +2,7 @@
 
 All notable changes to MCP Tools for Elementor are documented in this file.
 
-## [3.21.0] - 2026-10-20
+## [3.21.0] - 2026-10-29
 
 > Incident-response tools for a hacked site, contributed by @Mrshahidali420 from a real reinfection case (#160): spot the signs of a compromise, pull a suspicious file out safely, close the usual doors, find the request that brought a hack back, and stop a process that keeps rewriting files. Plus a switch to keep new tools on after updates, binary file writes, OAuth on subdirectory multisites, backups without `wp-config.php`, corrected ChatGPT and Codex connection steps, and five fixes from user reports: atomic text that rendered empty on Elementor 4.3, styles writes that dropped props, writes that an open editor's Force Save threw away, a wrong row id from `insert-row`, and SVG icon uploads History could not undo.
 
