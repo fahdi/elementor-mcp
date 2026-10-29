@@ -41,7 +41,7 @@ final class AdapterSourceTest extends TestCase {
 		$this->assertSame( 'Install and activate MCP Adapter', $item['action_label'] );
 
 		$fallback = new EMCP_Tools_Adapter_Attention( array( 'state' => 'missing', 'installed' => false, 'version' => '0.7.1', 'plugin' => '' ), true );
-		$this->assertSame( 'info', $fallback->item()['severity'], 'the built-in copy serves: a recommendation' );
+		$this->assertFalse( $fallback->applies(), 'the built-in copy serves: a permanent fallback, nothing to fix' );
 
 		$old = new EMCP_Tools_Adapter_Attention( array( 'state' => 'old', 'installed' => true, 'version' => '0.5.0', 'plugin' => '' ), true );
 		$this->assertSame( 'warning', $old->item()['severity'] );

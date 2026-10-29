@@ -140,6 +140,44 @@ describe( 'ConnectionScreen', () => {
 			'href',
 			'http://example.test/wp-admin/admin-post.php?action=emcp_tools_install_mcp_adapter'
 		);
+		expect(
+			within( rail ).queryByText( /Optional: the built-in copy works/ )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'offers the official MCP Adapter as an option while the built-in copy serves', () => {
+		window.history.replaceState(
+			{},
+			'',
+			'/wp-admin/admin.php?page=emcp-tools-connection'
+		);
+		render(
+			<AppProviders>
+				<ConnectionScreen
+					data={ {
+						...data,
+						status: {
+							...data.status,
+							adapter: 'bundled',
+							adapterAction: {
+								label: 'Install and activate MCP Adapter',
+								url: 'http://example.test/wp-admin/admin-post.php?action=emcp_tools_install_mcp_adapter',
+								optional: true,
+							},
+						},
+					} }
+				/>
+			</AppProviders>
+		);
+		const rail = screen.getByRole( 'region', { name: 'Server status' } );
+		expect(
+			within( rail ).getByText( /Optional: the built-in copy works/ )
+		).toBeInTheDocument();
+		expect(
+			within( rail ).getByRole( 'link', {
+				name: 'Install and activate MCP Adapter',
+			} )
+		).toBeInTheDocument();
 	} );
 
 	it( 'explains an empty connected apps list', () => {

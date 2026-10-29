@@ -670,6 +670,24 @@ a.eui-frame-user:focus-visible {
 	color: var(--emcp-warning-fg);
 }
 
+.eui-frame__content > .notice.eui-notice--info {
+	border-color: var(--emcp-primary-soft);
+	background: var(--emcp-primary-tint-2);
+	color: var(--emcp-primary-strong);
+}
+
+.eui-frame__content > .notice.eui-notice--success {
+	border-color: var(--emcp-success-dot);
+	background: var(--emcp-success-bg);
+	color: var(--emcp-success-fg);
+}
+
+.eui-frame__content > .notice.eui-notice--danger {
+	border-color: var(--emcp-danger-border);
+	background: var(--emcp-danger-bg);
+	color: var(--emcp-danger-fg);
+}
+
 /* Icon and button line up with the FIRST line of text, however it wraps:
  * the icon box is one line tall, and the 34px button is pulled into the
  * padding so it centres on that 20px line without growing the row. */
@@ -684,6 +702,15 @@ a.eui-frame-user:focus-visible {
 .eui-frame__content > .notice.eui-notice .eui-btn {
 	text-decoration: none;
 	white-space: nowrap;
+}
+
+/* Core colours links inside notices; the buttons keep their own colours. */
+.eui-frame__content > .notice.eui-notice .eui-btn--primary:is(:link, :visited, :hover, :focus, :active) {
+	color: var(--emcp-surface);
+}
+
+.eui-frame__content > .notice.eui-notice .eui-btn--ghost:is(:link, :visited, :hover, :focus, :active) {
+	color: inherit;
 }
 
 .eui-frame__content > .notice.eui-notice .eui-notice__icon {

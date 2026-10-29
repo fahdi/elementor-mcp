@@ -193,8 +193,9 @@ final class EMCP_Tools_Attention_Cloud extends EMCP_Tools_Attention_Base {
 }
 
 /**
- * The official MCP Adapter plugin is missing, inactive or too old (or EMCP runs
- * on another plugin's bundled copy). Same states and wording as the banner of
+ * No MCP Adapter loads, the official plugin is too old, or EMCP runs on another
+ * plugin's bundled copy. EMCP's own copy serving is not an item: it is a
+ * permanent fallback. Same states and wording as the banner of
  * EMCP_Tools_Adapter_Installer, with the same one-click action.
  */
 final class EMCP_Tools_Adapter_Attention extends EMCP_Tools_Attention_Base {

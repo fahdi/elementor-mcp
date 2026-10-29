@@ -124,16 +124,14 @@ final class AdapterStandaloneTest extends TestCase {
 		require_once EMCP_TOOLS_DIR . 'includes/class-adapter-installer.php';
 		$this->assertNull( EMCP_Tools_Adapter_Installer::banner( array( 'state' => 'ok', 'version' => '0.7.1', 'plugin' => '' ), true ) );
 
-		$fallback = EMCP_Tools_Adapter_Installer::banner( array( 'state' => 'missing', 'version' => '0.7.1', 'plugin' => '' ), true );
-		$this->assertSame( array( 'info', 'Install and activate MCP Adapter', true ), array( $fallback['type'], $fallback['button'], $fallback['dismissible'] ), 'connections work on the built-in copy' );
-		$this->assertStringContainsString( 'built into EMCP Tools', $fallback['message'] );
-
-		$inactive = EMCP_Tools_Adapter_Installer::banner( array( 'state' => 'inactive', 'version' => '0.7.1', 'plugin' => '' ), true );
-		$this->assertSame( array( 'info', 'Activate MCP Adapter' ), array( $inactive['type'], $inactive['button'] ) );
+		// The built-in copy is a permanent fallback: no banner while it serves.
+		$this->assertNull( EMCP_Tools_Adapter_Installer::banner( array( 'state' => 'missing', 'version' => '0.7.1', 'plugin' => '' ), true ) );
+		$this->assertNull( EMCP_Tools_Adapter_Installer::banner( array( 'state' => 'inactive', 'version' => '0.7.1', 'plugin' => '' ), true ) );
 
 		$other = EMCP_Tools_Adapter_Installer::banner( array( 'state' => 'missing', 'version' => '0.6.1', 'plugin' => 'elementor' ), true );
-		$this->assertSame( 'info', $other['type'] );
+		$this->assertSame( array( 'info', 'Install and activate MCP Adapter', true ), array( $other['type'], $other['button'], $other['dismissible'] ) );
 		$this->assertStringContainsString( 'elementor', $other['message'] );
+		$this->assertStringNotContainsString( 'future version', $other['message'] );
 
 		$old = EMCP_Tools_Adapter_Installer::banner( array( 'state' => 'old', 'version' => '0.5.0', 'plugin' => '' ), true );
 		$this->assertSame( array( 'warning', 'Update MCP Adapter', true ), array( $old['type'], $old['button'], $old['dismissible'] ) );
@@ -143,8 +141,42 @@ final class AdapterStandaloneTest extends TestCase {
 		$none = EMCP_Tools_Adapter_Installer::banner( array( 'state' => 'missing', 'version' => '', 'plugin' => '' ), false );
 		$this->assertSame( array( 'error', false ), array( $none['type'], $none['dismissible'] ), 'no adapter at all: the MCP server is off' );
 
-		foreach ( array( $fallback, $inactive, $other, $old, $none ) as $b ) {
+		foreach ( array( $other, $old, $none ) as $b ) {
 			$this->assertStringNotContainsString( "\u{2014}", $b['message'] . $b['button'] );
+		}
+	}
+
+	public function test_connection_offer_stays_available_as_an_option(): void {
+		require_once EMCP_TOOLS_DIR . 'includes/class-adapter-installer.php';
+		$this->assertNull( EMCP_Tools_Adapter_Installer::offer( array( 'state' => 'ok', 'version' => '0.7.1', 'plugin' => '' ), true ), 'the official plugin serves' );
+		$this->assertSame(
+			array( 'label' => 'Install and activate MCP Adapter', 'optional' => true ),
+			EMCP_Tools_Adapter_Installer::offer( array( 'state' => 'missing', 'version' => '0.7.1', 'plugin' => '' ), true ),
+			'the built-in copy serves: an option, not a request'
+		);
+		$this->assertSame( array( 'label' => 'Activate MCP Adapter', 'optional' => true ), EMCP_Tools_Adapter_Installer::offer( array( 'state' => 'inactive', 'version' => '0.7.1', 'plugin' => '' ), true ) );
+		$this->assertFalse( EMCP_Tools_Adapter_Installer::offer( array( 'state' => 'old', 'version' => '0.5.0', 'plugin' => '' ), true )['optional'] );
+		$this->assertFalse( EMCP_Tools_Adapter_Installer::offer( array( 'state' => 'missing', 'version' => '', 'plugin' => '' ), false )['optional'] );
+		$this->assertFalse( EMCP_Tools_Adapter_Installer::offer( array( 'state' => 'missing', 'version' => '0.6.1', 'plugin' => 'elementor' ), true )['optional'] );
+	}
+
+	public function test_network_wide_activation_needs_network_plugin_rights(): void {
+		require_once EMCP_TOOLS_DIR . 'includes/class-adapter-installer.php';
+		$caps = $GLOBALS['emcp_test']['caps'];
+		try {
+			EMCP_Tools_Adapter_Installer::use_network_wide( true );
+			// A site admin of a network where EMCP is network-activated.
+			$GLOBALS['emcp_test']['caps'] = array( 'activate_plugins' );
+			$this->assertFalse( EMCP_Tools_Adapter_Installer::can( 'inactive' ) );
+			$GLOBALS['emcp_test']['caps'] = array( 'activate_plugins', 'manage_network_plugins' );
+			$this->assertTrue( EMCP_Tools_Adapter_Installer::can( 'inactive' ) );
+			// EMCP active on this site only: the site's own rights are enough.
+			EMCP_Tools_Adapter_Installer::use_network_wide( false );
+			$GLOBALS['emcp_test']['caps'] = array( 'activate_plugins' );
+			$this->assertTrue( EMCP_Tools_Adapter_Installer::can( 'inactive' ) );
+		} finally {
+			$GLOBALS['emcp_test']['caps'] = $caps;
+			EMCP_Tools_Adapter_Installer::use_network_wide( null );
 		}
 	}
 

@@ -350,10 +350,11 @@ final class EMCP_Tools_Admin_Connection_Data {
 	}
 
 	/**
-	 * The install/activate button for the official MCP Adapter, when one is needed
-	 * and the user may use it.
+	 * The install/activate button for the official MCP Adapter, whenever the
+	 * official plugin is not the copy in use and the user may use it. `optional`
+	 * is true while EMCP's own copy serves and nothing needs fixing.
 	 *
-	 * @return array{label: string, url: string}|null
+	 * @return array{label: string, url: string, optional: bool}|null
 	 */
 	private static function adapter_action(): ?array {
 		if ( ! class_exists( 'EMCP_Tools_Adapter_Bootstrap' ) ) {
@@ -363,13 +364,14 @@ final class EMCP_Tools_Admin_Connection_Data {
 			require_once EMCP_TOOLS_DIR . 'includes/class-adapter-installer.php';
 		}
 		$status = EMCP_Tools_Adapter_Bootstrap::status();
-		$banner = EMCP_Tools_Adapter_Installer::banner( $status, EMCP_Tools_Adapter_Bootstrap::is_loaded() );
-		if ( null === $banner || ! EMCP_Tools_Adapter_Installer::can( (string) $status['state'] ) ) {
+		$offer  = EMCP_Tools_Adapter_Installer::offer( $status, EMCP_Tools_Adapter_Bootstrap::is_loaded() );
+		if ( null === $offer || ! EMCP_Tools_Adapter_Installer::can( (string) $status['state'] ) ) {
 			return null;
 		}
 		return array(
-			'label' => $banner['button'],
-			'url'   => html_entity_decode( EMCP_Tools_Adapter_Installer::action_url(), ENT_QUOTES ),
+			'label'    => $offer['label'],
+			'url'      => html_entity_decode( EMCP_Tools_Adapter_Installer::action_url(), ENT_QUOTES ),
+			'optional' => $offer['optional'],
 		);
 	}
 }

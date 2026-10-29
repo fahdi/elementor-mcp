@@ -6,15 +6,16 @@
  * abilities over MCP: the MCP Adapter creates the `/wp-json/mcp/...` server
  * endpoint. Since 0.7 the adapter is a standalone wordpress.org plugin (slug
  * `mcp-adapter`) and its migration guide deprecates bundling. EMCP still ships
- * a copy so existing sites keep their AI connections after updating, but uses
- * it only as a fallback:
+ * a copy, kept current, as a permanent fallback (user decision 2026-10-29), so
+ * no site depends on a second plugin:
  *
  * - Official plugin active: EMCP serves the whole `WP\MCP\` namespace from that
  *   plugin's files. Its "another version is already loaded" check then finds
  *   its own classes, and plugins that need 0.7.x get it.
  * - Otherwise: EMCP serves the namespace from its bundled copy, as it always
- *   did, and EMCP_Tools_Adapter_Installer recommends the official plugin with a
- *   one-click install and activate.
+ *   did. The Connection screen offers the official plugin as an option
+ *   (EMCP_Tools_Adapter_Installer); a notice appears only when no adapter
+ *   loads, the official plugin is too old or another plugin's copy is in use.
  *
  * Why a resolver at all. PHP can load only one class of a given name per
  * request. A plugin that bundles an old adapter behind its own plain

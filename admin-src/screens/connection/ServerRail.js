@@ -82,7 +82,8 @@ export function ServerRail( { data, apps, setApps, onSaved = () => {} } ) {
 						copy.version || '?'
 					)
 				: adapterLabel,
-			'official' === status.adapter,
+			// The built-in copy is a permanent fallback, as healthy as the plugin.
+			'official' === status.adapter || 'bundled' === status.adapter,
 		],
 		[
 			__( 'MCP Server', 'emcp-tools' ),
@@ -173,10 +174,22 @@ export function ServerRail( { data, apps, setApps, onSaved = () => {} } ) {
 							</li>
 						) ) }
 					</ul>
+					{ status.adapterAction?.optional && (
+						<p className="eui-conn__muted">
+							{ __(
+								'Optional: the built-in copy works. The official plugin updates from WordPress.org.',
+								'emcp-tools'
+							) }
+						</p>
+					) }
 					{ status.adapterAction && (
 						<p>
 							<Button
-								variant="primary"
+								variant={
+									status.adapterAction.optional
+										? 'secondary'
+										: 'primary'
+								}
 								href={ status.adapterAction.url }
 							>
 								{ status.adapterAction.label }
