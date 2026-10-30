@@ -68,7 +68,7 @@ export function ServerRail( { data, apps, setApps, onSaved = () => {} } ) {
 	}[ status.adapter ];
 	const rows = [
 		[
-			__( 'MCP Tools for Elementor', 'emcp-tools' ),
+			__( 'MCP Tools for WordPress & Page Builders', 'emcp-tools' ),
 			__( 'Active', 'emcp-tools' ),
 			true,
 		],

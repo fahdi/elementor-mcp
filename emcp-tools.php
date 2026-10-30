@@ -148,7 +148,7 @@ if ( EMCP_Tools_Migration::is_legacy_plugin_active() ) {
 			}
 			echo '<div class="notice notice-warning"><p>';
 			echo wp_kses(
-				__( '<strong>EMCP Tools:</strong> The previous &#8220;MCP Tools for Elementor&#8221; plugin (folder <code>elementor-mcp</code>) is still active. EMCP Tools has replaced it &mdash; please <strong>deactivate and delete</strong> the old plugin to finish the upgrade. Your settings and license carry over automatically. EMCP Tools stays paused until then.', 'emcp-tools' ),
+				__( '<strong>EMCP Tools:</strong> The previous plugin (folder <code>elementor-mcp</code>) is still active. EMCP Tools has replaced it &mdash; please <strong>deactivate and delete</strong> the old plugin to finish the upgrade. Your settings and license carry over automatically. EMCP Tools stays paused until then.', 'emcp-tools' ),
 				array(
 					'strong' => array(),
 					'code'   => array(),

@@ -50,7 +50,7 @@ msgid "EMCP Tools: the free version was deactivated because the Pro version is a
 msgstr ""
 
 #: emcp-tools.php:150
-msgid "<strong>EMCP Tools:</strong> The previous &#8220;MCP Tools for Elementor&#8221; plugin (folder <code>elementor-mcp</code>) is still active. EMCP Tools has replaced it &mdash; please <strong>deactivate and delete</strong> the old plugin to finish the upgrade. Your settings and license carry over automatically. EMCP Tools stays paused until then."
+msgid "<strong>EMCP Tools:</strong> The previous plugin (folder <code>elementor-mcp</code>) is still active. EMCP Tools has replaced it &mdash; please <strong>deactivate and delete</strong> the old plugin to finish the upgrade. Your settings and license carry over automatically. EMCP Tools stays paused until then."
 msgstr ""
 
 #: includes/abilities/class-acf-abilities.php:82
@@ -5798,7 +5798,7 @@ msgstr ""
 #: includes/admin/class-admin.php:448
 #: includes/class-plugin.php:210
 #: assets/admin/build/screen-connection.js:5
-msgid "MCP Tools for Elementor"
+msgid "MCP Tools for WordPress & Page Builders"
 msgstr ""
 
 #: includes/admin/class-admin.php:658
@@ -9818,7 +9818,7 @@ msgstr ""
 #. translators: %s: comma-separated list of missing dependencies
 #: includes/class-bootstrap.php:739
 #, php-format
-msgid "MCP Tools for Elementor requires the following to be installed and active: %s"
+msgid "MCP Tools for WordPress & Page Builders requires the following to be installed and active: %s"
 msgstr ""
 
 #: includes/class-change-log.php:132
@@ -10969,7 +10969,7 @@ msgid "Tools for reading and manipulating Elementor page designs via MCP."
 msgstr ""
 
 #: includes/class-plugin.php:296
-msgid "MCP Tools for Elementor Server"
+msgid "MCP Tools for WordPress & Page Builders Server"
 msgstr ""
 
 #: includes/class-post-authorization.php:88

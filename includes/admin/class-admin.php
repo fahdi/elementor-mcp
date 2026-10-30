@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin settings page for MCP Tools for Elementor.
+ * Admin settings page for MCP Tools for WordPress & Page Builders.
  *
  * Provides a UI to toggle individual MCP tools on/off and view
  * connection information for various MCP clients.
@@ -454,7 +454,7 @@ class EMCP_Tools_Admin {
 	public function add_settings_page(): void {
 		if ( ! current_user_can( EMCP_Tools_Management_Access::CAPABILITY ) ) { return; }
 		$this->hook_suffixes[] = add_menu_page(
-			__( 'MCP Tools for Elementor', 'emcp-tools' ),
+			__( 'MCP Tools for WordPress & Page Builders', 'emcp-tools' ),
 			__( 'EMCP Tools', 'emcp-tools' ),
 			EMCP_Tools_Management_Access::CAPABILITY,
 			self::PAGE_SLUG,
