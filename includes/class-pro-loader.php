@@ -21,6 +21,11 @@ final class EMCP_Tools_Pro_Loader {
 
 	/** Pro class files, in load order. Relative to the Pro root. */
 	private const FILES = array(
+		'includes/abilities/ultimate-member/class-ultimate-member-api.php',
+		'includes/abilities/sitekit/class-sitekit-api.php',
+		'includes/abilities/ultimate-member/class-ultimate-member-writer.php',
+		'includes/abilities/flamingo/class-flamingo-api.php',
+		'includes/abilities/flamingo/class-flamingo-writer.php',
 		'includes/class-sandbox-template-compiler.php',
 		// Runtime, not MCP surface: generated widgets call it on every front-end render.
 		'includes/class-widget-query.php',
@@ -105,6 +110,11 @@ final class EMCP_Tools_Pro_Loader {
 	 * stay in FILES so their front-end hooks fire on every request.
 	 */
 	private const MCP_FILES = array(
+		'includes/abilities/ultimate-member/class-ultimate-member-integration.php',
+		'includes/abilities/sitekit/class-sitekit-integration.php',
+		'includes/abilities/flamingo/class-flamingo-integration.php',
+		'includes/abilities/fluentsmtp/class-fluentsmtp-api.php',
+		'includes/abilities/fluentsmtp/class-fluentsmtp-integration.php',
 		'includes/class-color-contrast.php',
 		'includes/class-content-extractor.php',
 		'includes/class-seo-meta.php',
@@ -411,6 +421,8 @@ final class EMCP_Tools_Pro_Loader {
 	}
 
 	public static function wire_runtime_hooks(): void {
+		if ( class_exists( 'EMCP_Tools_Ultimate_Member_Writer' ) ) { EMCP_Tools_Ultimate_Member_Writer::boot(); }
+		if ( class_exists( 'EMCP_Tools_Flamingo_Writer' ) ) { EMCP_Tools_Flamingo_Writer::boot(); }
 		// AI Chat runtime wiring now lives in EMCP_Tools_AI_Chat_Module::register(),
 		// booted by the modules registry only when the module is active.
 

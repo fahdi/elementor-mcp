@@ -2,6 +2,14 @@
 
 All notable changes to MCP Tools for Elementor are documented in this file.
 
+## [3.21.1] - 2026-10-30
+
+- New: Free integrations for LiteSpeed Cache, Redirection, WP Mail SMTP, Custom Post Type UI, Wordfence and Pods. Wordfence exposes read-only status; LiteSpeed invalidation requires a supported server.
+- New in Pro: FluentSMTP, Flamingo, Site Kit and Ultimate Member. Site Kit exposes local setup, authentication and module state, without connected Google reports.
+- New write tools start disabled and enforce capabilities, confirmation, native plugin constraints and supported-version checks. Reversible operations include conflict-aware History undo; irreversible actions report their recovery limits.
+- Improved: CPT UI preserves quoted labels and descriptions and refuses filtered storage during undo. Pods verifies persisted schema and record values after native hooks.
+- Security: Mail tests reject competing SMTP plugins, retain durable replay protection and report uncertain outcomes. Flamingo filters nested sensitive fields and reconciles post-commit failures. Ultimate Member refuses ambiguous duplicate metadata before writes or undo.
+
 ## [3.21.0] - 2026-10-29
 
 > Incident-response tools for a hacked site, contributed by @Mrshahidali420 from a real reinfection case (#160): spot the signs of a compromise, pull a suspicious file out safely, close the usual doors, find the request that brought a hack back, and stop a process that keeps rewriting files. Plus a switch to keep new tools on after updates, binary file writes, OAuth on subdirectory multisites, backups without `wp-config.php`, corrected ChatGPT and Codex connection steps, and five fixes from user reports: atomic text that rendered empty on Elementor 4.3, styles writes that dropped props, writes that an open editor's Force Save threw away, a wrong row id from `insert-row`, and SVG icon uploads History could not undo.

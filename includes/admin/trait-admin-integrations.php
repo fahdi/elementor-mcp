@@ -127,6 +127,10 @@ trait EMCP_Tools_Admin_Integrations_Trait {
 				'label' => __( 'Elementor Addons', 'emcp-tools' ),
 				'desc'  => __( 'Discover addon widget packs, and manage Ultimate Addons for Elementor templates.', 'emcp-tools' ),
 			),
+			'performance' => array(
+				'label' => __( 'Performance and caching', 'emcp-tools' ),
+				'desc' => __( 'Cache status and supported cache operations.', 'emcp-tools' ),
+			),
 			'other'     => array(
 				'label' => __( 'Other Integrations', 'emcp-tools' ),
 				'desc'  => __( 'Additional plugin integrations.', 'emcp-tools' ),

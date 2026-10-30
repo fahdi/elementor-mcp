@@ -219,3 +219,13 @@ includes/admin/class-pro-usage.php
 # Pro admin screen bundles and sources (admin redesign)
 assets/admin/build-pro
 admin-src-pro
+includes/abilities/fluentsmtp/class-fluentsmtp-api.php
+includes/abilities/fluentsmtp/class-fluentsmtp-integration.php
+includes/abilities/flamingo/class-flamingo-api.php
+includes/abilities/flamingo/class-flamingo-writer.php
+includes/abilities/flamingo/class-flamingo-integration.php
+includes/abilities/ultimate-member/class-ultimate-member-api.php
+includes/abilities/ultimate-member/class-ultimate-member-writer.php
+includes/abilities/ultimate-member/class-ultimate-member-integration.php
+includes/abilities/sitekit/class-sitekit-api.php
+includes/abilities/sitekit/class-sitekit-integration.php

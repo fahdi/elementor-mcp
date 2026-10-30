@@ -515,6 +515,184 @@ trait EMCP_Tools_Admin_Catalog_Trait {
 					),
 				),
 			),
+			'wp_sitekit' => array(
+				'platform' => 'plugins', 'group' => 'other', 'pro' => true,
+				'label' => __( 'Site Kit', 'emcp-tools' ), 'note' => __( 'Locally stored setup and module state. Connected Google reports are not exposed.', 'emcp-tools' ),
+				'tools' => array(
+					'emcp-tools/sitekit-read' => array(
+						'label' => __( 'Site Kit Read', 'emcp-tools' ), 'description' => __( 'Read native authentication, setup and module state without Google requests or credentials.', 'emcp-tools' ),
+						'badges' => array( 'read-only' ), 'operations' => array( 'status', 'list-modules', 'get-module' ),
+						'available' => class_exists( 'EMCP_Tools_Sitekit_Api' ) && EMCP_Tools_Sitekit_Api::active(), 'requires' => array( 'name' => 'Site Kit by Google', 'kind' => 'plugin' ),
+					),
+				),
+			),
+			'wp_ultimate_member' => array(
+				'platform' => 'plugins', 'group' => 'other', 'pro' => true,
+				'label' => __( 'Ultimate Member', 'emcp-tools' ), 'note' => __( 'Native membership inspection and bounded presentation updates with undo.', 'emcp-tools' ),
+				'tools' => array(
+					'emcp-tools/ultimate-member-read' => array(
+						'label' => __( 'Ultimate Member Read', 'emcp-tools' ), 'description' => __( 'Read permitted form/directory definitions, member status and stored access restrictions.', 'emcp-tools' ),
+						'badges' => array( 'read-only' ), 'operations' => array( 'status', 'list-forms', 'get-form', 'list-directories', 'get-directory', 'get-member-status', 'get-content-restriction' ),
+						'available' => class_exists( 'EMCP_Tools_Ultimate_Member_Api' ) && EMCP_Tools_Ultimate_Member_Api::active(), 'requires' => array( 'name' => 'Ultimate Member', 'kind' => 'plugin' ),
+					),
+					'emcp-tools/ultimate-member-write' => array(
+						'label' => __( 'Ultimate Member Write', 'emcp-tools' ), 'description' => __( 'Change a custom form button label or directory page size with version checks and undo.', 'emcp-tools' ),
+						'badges' => array( 'destructive' ), 'operations' => array( 'set-form-label', 'set-directory-page-size' ),
+						'available' => class_exists( 'EMCP_Tools_Ultimate_Member_Api' ) && EMCP_Tools_Ultimate_Member_Api::active(), 'requires' => array( 'name' => 'Ultimate Member', 'kind' => 'plugin' ),
+					),
+				),
+			),
+			'wp_wordfence' => array(
+				'platform' => 'plugins', 'group' => 'other',
+				'label' => __( 'Wordfence', 'emcp-tools' ), 'note' => __( 'Read-only firewall, scan and finding inspection. No firewall or scan changes.', 'emcp-tools' ),
+				'tools' => array(
+					'emcp-tools/wordfence-read' => array(
+						'label' => __( 'Wordfence Read', 'emcp-tools' ), 'description' => __( 'Read native status and bounded finding/block metadata with private fields redacted.', 'emcp-tools' ),
+						'badges' => array( 'read-only' ), 'operations' => array( 'status', 'firewall', 'scan-status', 'list-findings', 'get-finding', 'list-blocks' ),
+						'available' => class_exists( 'EMCP_Tools_Wordfence_Api' ) && EMCP_Tools_Wordfence_Api::active(), 'requires' => array( 'name' => 'Wordfence', 'kind' => 'plugin' ),
+					),
+				),
+			),
+			'wp_litespeed' => array(
+				'platform' => 'plugins', 'group' => 'performance',
+				'label' => __( 'LiteSpeed Cache', 'emcp-tools' ),
+				'note' => __( 'Effective cache status and confirmed page-cache purges on supported servers.', 'emcp-tools' ),
+				'tools' => array(
+					'emcp-tools/litespeed-read' => array(
+						'label' => __( 'LiteSpeed Cache Read', 'emcp-tools' ), 'description' => __( 'Read cache flags, TTL and actual server support.', 'emcp-tools' ),
+						'badges' => array( 'read-only' ), 'operations' => array( 'status' ),
+						'available' => class_exists( 'EMCP_Tools_Litespeed_Api' ) && EMCP_Tools_Litespeed_Api::active(), 'requires' => array( 'name' => 'LiteSpeed Cache', 'kind' => 'plugin' ),
+					),
+					'emcp-tools/litespeed-write' => array(
+						'label' => __( 'LiteSpeed Cache Write', 'emcp-tools' ), 'description' => __( 'Request a path or page-cache purge over HTTP on a supported server.', 'emcp-tools' ),
+						'badges' => array( 'destructive' ), 'operations' => array( 'purge-path', 'purge-page-cache' ),
+						'available' => class_exists( 'EMCP_Tools_Litespeed_Api' ) && EMCP_Tools_Litespeed_Api::active(), 'requires' => array( 'name' => 'LiteSpeed Cache', 'kind' => 'plugin' ),
+					),
+				),
+			),
+			'wp_flamingo' => array(
+				'platform' => 'plugins', 'group' => 'forms', 'pro' => true,
+				'label' => __( 'Flamingo', 'emcp-tools' ),
+				'note' => __( 'Native messages, contacts and channels with confirmed status moderation and conflict-aware undo.', 'emcp-tools' ),
+				'tools' => array(
+					'emcp-tools/flamingo-read' => array(
+						'label' => __( 'Flamingo Read', 'emcp-tools' ), 'description' => __( 'Read permitted message/contact metadata and opt-in details.', 'emcp-tools' ),
+						'badges' => array( 'read-only' ), 'operations' => array( 'status', 'list-messages', 'get-message', 'list-contacts', 'get-contact', 'list-channels' ),
+						'available' => class_exists( 'EMCP_Tools_Flamingo_Api' ) && EMCP_Tools_Flamingo_Api::active(), 'requires' => array( 'name' => 'Flamingo', 'kind' => 'plugin' ),
+					),
+					'emcp-tools/flamingo-write' => array(
+						'label' => __( 'Flamingo Write', 'emcp-tools' ), 'description' => __( 'Spam, unspam, trash or restore a message with a current version and confirmation.', 'emcp-tools' ),
+						'badges' => array( 'destructive' ), 'operations' => array( 'spam', 'unspam', 'trash', 'restore' ),
+						'available' => class_exists( 'EMCP_Tools_Flamingo_Api' ) && EMCP_Tools_Flamingo_Api::active(), 'requires' => array( 'name' => 'Flamingo', 'kind' => 'plugin' ),
+					),
+				),
+			),
+			'wp_fluentsmtp' => array(
+				'platform' => 'plugins', 'group' => 'marketing', 'pro' => true,
+				'label' => __( 'FluentSMTP', 'emcp-tools' ),
+				'note' => __( 'Credential-free mailer status and explicitly confirmed native test emails with durable retry protection.', 'emcp-tools' ),
+				'tools' => array(
+					'emcp-tools/fluentsmtp-read' => array(
+						'label' => __( 'FluentSMTP Read', 'emcp-tools' ), 'description' => __( 'Read redacted mailer status and test receipts.', 'emcp-tools' ),
+						'badges' => array( 'read-only' ), 'operations' => array( 'status', 'list-connections', 'routing', 'health', 'list-logs', 'get-log', 'test-status' ),
+						'available' => class_exists( 'EMCP_Tools_Fluentsmtp_Api' ) && EMCP_Tools_Fluentsmtp_Api::active(), 'requires' => array( 'name' => 'FluentSMTP', 'kind' => 'plugin' ),
+					),
+					'emcp-tools/fluentsmtp-write' => array(
+						'label' => __( 'FluentSMTP Write', 'emcp-tools' ), 'description' => __( 'Send one confirmed native test email. Reusing a request ID never sends again.', 'emcp-tools' ),
+						'badges' => array( 'destructive' ), 'operations' => array( 'send-test' ),
+						'available' => class_exists( 'EMCP_Tools_Fluentsmtp_Api' ) && EMCP_Tools_Fluentsmtp_Api::active(), 'requires' => array( 'name' => 'FluentSMTP', 'kind' => 'plugin' ),
+					),
+				),
+			),
+			'wp_mail_smtp' => array(
+				'platform' => 'plugins', 'group' => 'marketing',
+				'label' => __( 'WP Mail SMTP', 'emcp-tools' ),
+				'note' => __( 'Credential-free mailer status and explicitly confirmed native test emails with durable retry protection.', 'emcp-tools' ),
+				'tools' => array(
+					'emcp-tools/wp-mail-smtp-read' => array(
+						'label' => __( 'WP Mail SMTP Read', 'emcp-tools' ), 'description' => __( 'Read redacted mailer status and test receipts.', 'emcp-tools' ),
+						'badges' => array( 'read-only' ), 'operations' => array( 'status', 'test-status' ),
+						'available' => class_exists( 'EMCP_Tools_Wp_Mail_Smtp_Api' ) && EMCP_Tools_Wp_Mail_Smtp_Api::active(), 'requires' => array( 'name' => 'WP Mail SMTP', 'kind' => 'plugin' ),
+					),
+					'emcp-tools/wp-mail-smtp-write' => array(
+						'label' => __( 'WP Mail SMTP Write', 'emcp-tools' ), 'description' => __( 'Send one confirmed native test email. Reusing a request ID never sends again.', 'emcp-tools' ),
+						'badges' => array( 'destructive' ), 'operations' => array( 'send-test' ),
+						'available' => class_exists( 'EMCP_Tools_Wp_Mail_Smtp_Api' ) && EMCP_Tools_Wp_Mail_Smtp_Api::active(), 'requires' => array( 'name' => 'WP Mail SMTP', 'kind' => 'plugin' ),
+					),
+				),
+			),
+			'wp_pods' => array(
+				'platform' => 'plugins',
+				'group' => 'dynamic',
+				'label' => __( 'Pods', 'emcp-tools' ),
+				'note' => __( 'Public post-type Pods using metadata storage and scalar fields. No SQL, code, user/setting Pods or relationship writes. Creation is audited as irreversible; supported edits have History undo.', 'emcp-tools' ),
+				'tools' => array(
+					'emcp-tools/pods-read' => array(
+						'label' => __( 'Pods Read', 'emcp-tools' ),
+						'description' => __( 'Read supported Pod schemas, fields, records and versions with native field permissions.', 'emcp-tools' ),
+						'badges' => array( 'read-only' ),
+						'operations' => array( 'status', 'list-pods', 'get-pod', 'list-fields', 'list-records', 'get-record' ),
+						'available' => class_exists( 'EMCP_Tools_Pods_Api' ) && EMCP_Tools_Pods_Api::active(),
+						'requires' => array( 'name' => 'Pods', 'kind' => 'plugin' ),
+					),
+					'emcp-tools/pods-write' => array(
+						'label' => __( 'Pods Write', 'emcp-tools' ),
+						'description' => __( 'Create scalar-field Pods, rename their labels, create drafts and edit scalar values. Writes default off and require confirmation.', 'emcp-tools' ),
+						'badges' => array(),
+						'operations' => array( 'create-pod', 'update-pod-label', 'create-record', 'update-record' ),
+						'available' => class_exists( 'EMCP_Tools_Pods_Api' ) && EMCP_Tools_Pods_Api::active(),
+						'requires' => array( 'name' => 'Pods', 'kind' => 'plugin' ),
+					),
+				),
+			),
+			'wp_cptui' => array(
+				'platform' => 'plugins',
+				'group' => 'dynamic',
+				'label' => __( 'Custom Post Type UI', 'emcp-tools' ),
+				'note' => __( 'Structured CPT UI definitions. Slugs are immutable; no code or custom capabilities. Undo of creation refuses definitions with content or dependent schemas.', 'emcp-tools' ),
+				'tools' => array(
+					'emcp-tools/cptui-read' => array(
+						'label' => __( 'CPT UI Read', 'emcp-tools' ),
+						'description' => __( 'Read CPT UI-owned post types, taxonomies, registered public types and schema versions.', 'emcp-tools' ),
+						'badges' => array( 'read-only' ),
+						'operations' => array( 'status', 'list-post-types', 'get-post-type', 'list-taxonomies', 'get-taxonomy', 'list-registered-post-types' ),
+						'available' => class_exists( 'EMCP_Tools_Cptui_Api' ) && EMCP_Tools_Cptui_Api::active(),
+						'requires' => array( 'name' => 'Custom Post Type UI', 'kind' => 'plugin' ),
+					),
+					'emcp-tools/cptui-write' => array(
+						'label' => __( 'CPT UI Write', 'emcp-tools' ),
+						'description' => __( 'Create post types and taxonomies; update labels and descriptions. Writes default off and require confirmation.', 'emcp-tools' ),
+						'badges' => array(),
+						'operations' => array( 'create-post-type', 'update-post-type', 'create-taxonomy', 'update-taxonomy' ),
+						'available' => class_exists( 'EMCP_Tools_Cptui_Api' ) && EMCP_Tools_Cptui_Api::active(),
+						'requires' => array( 'name' => 'Custom Post Type UI', 'kind' => 'plugin' ),
+					),
+				),
+			),
+			'wp_redirection' => array(
+				'platform' => 'plugins',
+				'group' => 'seo',
+				'label' => __( 'Redirection', 'emcp-tools' ),
+				'note' => __( 'Manage the Redirection plugin separately from EMCP Redirect Manager. Exact URL redirects and WordPress-module groups only. Writes default off; redirect deletion and group creation are irreversible.', 'emcp-tools' ),
+				'tools' => array(
+					'emcp-tools/redirection-read' => array(
+						'label' => __( 'Redirection Read', 'emcp-tools' ),
+						'description' => __( 'Read redirects, groups, versions, status and redacted redirect/404 logs.', 'emcp-tools' ),
+						'badges' => array( 'read-only' ),
+						'operations' => array( 'status', 'list-redirects', 'get-redirect', 'list-groups', 'get-group', 'list-logs', 'list-404s' ),
+						'available' => class_exists( 'EMCP_Tools_Redirection_Api' ) && EMCP_Tools_Redirection_Api::active(),
+						'requires' => array( 'name' => 'Redirection', 'kind' => 'plugin' ),
+					),
+					'emcp-tools/redirection-write' => array(
+						'label' => __( 'Redirection Write', 'emcp-tools' ),
+						'badges' => array(),
+						'description' => __( 'Create, edit, enable, disable or delete exact redirects; create or rename WordPress groups. Confirm required; existing records require a version.', 'emcp-tools' ),
+						'operations' => array( 'create-redirect', 'update-redirect', 'enable-redirect', 'disable-redirect', 'delete-redirect', 'create-group', 'rename-group' ),
+						'available' => class_exists( 'EMCP_Tools_Redirection_Api' ) && EMCP_Tools_Redirection_Api::active(),
+						'requires' => array( 'name' => 'Redirection', 'kind' => 'plugin' ),
+					),
+				),
+			),
 			'wp_acf'           => array(
 				'platform' => 'plugins',
 				'group'    => 'dynamic',
