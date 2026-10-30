@@ -221,14 +221,15 @@ EMCP Tools works on your own site. It contacts the services below only in the si
 
 = 3.21.1 =
 
-Ten native plugin integrations with guarded writes, History recovery and verified plugin compatibility.
+Ten native plugin integrations, six of them free, plus fixes for the EMCP Cloud Gateway and for Safe Updates on MariaDB.
 
-* New: Free integrations for LiteSpeed Cache, Redirection, WP Mail SMTP, Custom Post Type UI, Wordfence and Pods. Wordfence is read-only; LiteSpeed cache invalidation requires a supported server.
+* New: Free integrations for Redirection, Custom Post Type UI, Pods, WP Mail SMTP, LiteSpeed Cache and Wordfence. Wordfence is read-only; LiteSpeed cache invalidation requires a supported server.
 * New in Pro: FluentSMTP, Flamingo, Site Kit and Ultimate Member. Site Kit reads local setup, authentication and module state.
 * New write tools start disabled. Enable them explicitly on the Tools screen.
-* Fixed: Safe Updates reported "Could not verify database table ownership" on MariaDB sites whose database account has no role enabled.
-* Fixed: EMCP Cloud showed "Gateway unavailable" after updating to 3.21.0. A request without an MCP-Protocol-Version header now uses the version its session negotiated.
 * Improved: Native write verification, conflict-aware undo, partial-write recovery, nested sensitive-field filtering and mail-test receipts that prevent accidental replay.
+* Fixed: EMCP Cloud showed "Gateway unavailable" after updating to 3.21.0. A request without an MCP-Protocol-Version header now uses the version its session negotiated.
+* Fixed: Safe Updates reported "Could not verify database table ownership" on MariaDB sites whose database account has no role enabled.
+* Changed: The product name is now "MCP Tools for WordPress & Page Builders". Tool names and the server address are unchanged.
 
 = 3.21.0 =
 

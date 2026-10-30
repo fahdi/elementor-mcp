@@ -41,7 +41,7 @@ EMCP Tools is a WordPress plugin that exposes your site as **[MCP](https://model
 
 **Understand and undo.** One-call page snapshots, public front-end HTML inspection, content search across your own pages and templates, a change ledger with rollback, and read-only performance and security scans that return a scored report.
 
-**Speak your plugins.** Integrations that register only when the plugin is active: ACF, Meta Box, WooCommerce, 8 form builders, 7 SEO plugins, and the Elementor addon packs. See the [integrations directory](https://emcptools.com/integrations/).
+**Speak your plugins.** Integrations that register only when the plugin is active: ACF, Meta Box, WooCommerce, 8 form builders, 7 SEO plugins, and the Elementor addon packs. New in 3.21.1, free: Redirection, Custom Post Type UI, Pods, WP Mail SMTP, LiteSpeed Cache and Wordfence; in Pro: FluentSMTP, Flamingo, Site Kit and Ultimate Member. Pro also covers Polylang, TranslatePress, TablePress, Tutor LMS, LifterLMS, The Events Calendar, Amelia, FluentCRM, MailPoet and FunnelKit. See the [integrations directory](https://emcptools.com/integrations/).
 
 **Animate with GSAP.** Pro includes an opt-in local GSAP 3.15.0 integration: core plus all 24 distributed plugins, stable WordPress handles, context and per-plugin switches, and MCP read/write management.
 

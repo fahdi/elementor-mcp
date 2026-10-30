@@ -2,15 +2,18 @@
 
 All notable changes to MCP Tools for WordPress & Page Builders are documented in this file.
 
-## [3.21.1] - 2026-10-30
+## [3.21.1] - 2026-10-31
 
-- Fixed: **Safe Updates showed "Blocked: Could not verify database table ownership" on MariaDB sites.** On MariaDB the role check read a single empty row when the database account has no role enabled and then asked the server for the grants of a role with no name, which failed. Readiness now skips the empty row, so MariaDB sites (most shared hosts) can run Safe Updates again. MySQL sites were not affected.
-- Fixed: **EMCP Cloud showed "Gateway unavailable" after updating to 3.21.0.** The bundled MCP Adapter 0.7.1 refuses any request after `initialize` that carries no `MCP-Protocol-Version` header, and the Gateway sent only the session id. EMCP now fills a missing header from the version the session negotiated, as the MCP specification allows, so the Gateway and other clients that omit it connect again. A header the client does send is never changed.
-- New: Free integrations for LiteSpeed Cache, Redirection, WP Mail SMTP, Custom Post Type UI, Wordfence and Pods. Wordfence exposes read-only status; LiteSpeed invalidation requires a supported server.
-- New in Pro: FluentSMTP, Flamingo, Site Kit and Ultimate Member. Site Kit exposes local setup, authentication and module state, without connected Google reports.
-- New write tools start disabled and enforce capabilities, confirmation, native plugin constraints and supported-version checks. Reversible operations include conflict-aware History undo; irreversible actions report their recovery limits.
-- Improved: CPT UI preserves quoted labels and descriptions and refuses filtered storage during undo. Pods verifies persisted schema and record values after native hooks.
-- Security: Mail tests reject competing SMTP plugins, retain durable replay protection and report uncertain outcomes. Flamingo filters nested sensitive fields and reconciles post-commit failures. Ultimate Member refuses ambiguous duplicate metadata before writes or undo.
+> Ten native plugin integrations, six of them free and also in EMCP Lite, plus fixes for the EMCP Cloud Gateway and for Safe Updates on MariaDB after 3.21.0.
+
+- New: **Six free plugin integrations**: Redirection, Custom Post Type UI, Pods, WP Mail SMTP, LiteSpeed Cache and Wordfence. Each works through the plugin's own API and only on the plugin versions it was verified against. Wordfence is read-only; LiteSpeed cache invalidation needs a supported LiteSpeed server.
+- New in Pro: **FluentSMTP, Flamingo, Site Kit by Google and Ultimate Member.** Site Kit reads local setup, authentication and module state, never connected Google reports.
+- New write tools start disabled and check capabilities, confirmation, the plugin's own constraints and its supported version. Reversible writes go to History with conflict-aware undo; irreversible actions say what cannot be recovered.
+- Improved: CPT UI keeps quoted labels and descriptions and refuses filtered storage during undo. Pods checks the saved schema and record values after its own hooks run.
+- Security: Mail tests refuse to run next to a competing SMTP plugin, keep durable replay protection and report uncertain outcomes. Flamingo filters nested sensitive fields and reconciles failures after commit. Ultimate Member refuses ambiguous duplicate metadata before a write or an undo.
+- Fixed: **EMCP Cloud showed "Gateway unavailable" after updating to 3.21.0.** The bundled MCP Adapter 0.7.1 refuses any request after `initialize` that carries no `MCP-Protocol-Version` header, and the Gateway sent only the session id. EMCP now fills a missing header from the version the session negotiated, as the MCP specification allows, so the Gateway and other clients that omit it connect again. A header the client does send is never changed. The Gateway was also fixed on its side, so connected sites recovered without waiting for this update.
+- Fixed: **Safe Updates showed "Blocked: Could not verify database table ownership" on MariaDB sites.** When the database account has no role enabled, MariaDB lists one empty role, and readiness then asked for the grants of a role with no name, which failed. Readiness now skips it, so MariaDB sites (most shared hosts) can run Safe Updates again. MySQL sites were not affected.
+- Changed: **The product name is now "MCP Tools for WordPress & Page Builders".** It appears in the admin, the MCP server name and the docs. The plugin folder, slug, tool names and server address are unchanged, so connected AI clients keep working.
 
 ## [3.21.0] - 2026-10-29
 
