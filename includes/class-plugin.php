@@ -129,6 +129,10 @@ class EMCP_Tools_Plugin {
 		// home host (connector left pointed at an old/temporary domain).
 		require_once EMCP_TOOLS_DIR . 'includes/class-mcp-host-guard.php';
 		add_filter( 'rest_pre_dispatch', array( 'EMCP_Tools_MCP_Host_Guard', 'guard' ), 5, 3 );
+		// Adapter 0.7 requires MCP-Protocol-Version after initialize; fill it from
+		// the negotiated session for clients that omit it (the Cloud Gateway did).
+		require_once EMCP_TOOLS_DIR . 'includes/class-mcp-protocol-header.php';
+		add_filter( 'rest_pre_dispatch', array( 'EMCP_Tools_MCP_Protocol_Header', 'fill' ), 4, 3 );
 		// Never cache/buffer MCP responses (LiteSpeed/QUIC drop-suspect, Issue 1).
 		add_filter( 'rest_pre_serve_request', array( 'EMCP_Tools_MCP_Host_Guard', 'no_store_headers' ), 10, 4 );
 
@@ -207,7 +211,7 @@ class EMCP_Tools_Plugin {
 		wp_register_ability_category(
 			'emcp-tools',
 			array(
-				'label'       => __( 'MCP Tools for Elementor', 'emcp-tools' ),
+				'label'       => __( 'MCP Tools for WordPress & Page Builders', 'emcp-tools' ),
 				'description' => __( 'Tools for reading and manipulating Elementor page designs via MCP.', 'emcp-tools' ),
 			)
 		);
@@ -293,7 +297,7 @@ class EMCP_Tools_Plugin {
 			'emcp-tools-server',                                   // server_id
 			'mcp',                                                    // route_namespace
 			'emcp-tools-server',                                   // route
-			__( 'MCP Tools for Elementor Server', 'emcp-tools' ),            // server_name
+			__( 'MCP Tools for WordPress & Page Builders Server', 'emcp-tools' ),            // server_name
 			EMCP_Tools_Site_Context::server_instructions(),         // description (base + env + profile + site context)
 			'v' . EMCP_TOOLS_VERSION,                              // version
 			array( \WP\MCP\Transport\HttpTransport::class ),          // transports

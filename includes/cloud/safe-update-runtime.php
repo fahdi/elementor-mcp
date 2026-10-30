@@ -340,6 +340,8 @@ class EMCP_Update_Runtime {
 		if ( false !== stripos( $db->server_info, 'MariaDB' ) ) {
 			if ( $db->server_version >= 100005 ) {
 				foreach ( $read( 'SELECT ROLE_NAME FROM information_schema.ENABLED_ROLES' ) as $role ) {
+					// No enabled role reads as one NULL row, not an empty result.
+					if ( ! is_string( $role ) || '' === $role ) { continue; }
 					$grants = array_merge( $grants, $read( 'SHOW GRANTS FOR `' . str_replace( '`', '``', $role ) . '`' ) );
 				}
 			}

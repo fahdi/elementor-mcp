@@ -89,6 +89,15 @@ final class SafeUpdateRuntimeTest extends TestCase {
 		$this->runtime( 'recovery_privileges', $db, 'fixture' );
 		$this->assertCount( 4, $db->queries );
 	}
+	public function test_mariadb_without_an_enabled_role_reads_only_the_account_grants(): void {
+		// MariaDB 10.5 to 11.8 answer ENABLED_ROLES with one NULL row when no role is enabled.
+		// `SHOW GRANTS FOR ``` then failed with "Invalid role specification", which blocked
+		// Safe Updates on every such site as database_schema_unavailable.
+		$grants = array( 'GRANT USAGE ON *.* TO `user`@`%`', 'GRANT ALL PRIVILEGES ON `fixture`.* TO `user`@`%`' );
+		$db = $this->grant_database( array( 'SHOW GRANTS' => $grants, 'SELECT ROLE_NAME FROM information_schema.ENABLED_ROLES' => array( null, '' ) ), '11.8.8-MariaDB-ubu2404', 110808 );
+		$this->assertSame( $grants, $this->runtime( 'effective_grants', $db ) );
+		$this->assertSame( array( 'SHOW GRANTS', 'SELECT ROLE_NAME FROM information_schema.ENABLED_ROLES' ), $db->queries );
+	}
 	public function test_partial_revokes_schema_scopes_are_literal_for_grants_and_revocations(): void {
 		$settings = 'SELECT @@partial_revokes, @@lower_case_table_names';
 		$db = $this->grant_database( array( $settings => array( array( 1, 0 ) ) ) );

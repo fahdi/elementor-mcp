@@ -226,6 +226,8 @@ Ten native plugin integrations with guarded writes, History recovery and verifie
 * New: Free integrations for LiteSpeed Cache, Redirection, WP Mail SMTP, Custom Post Type UI, Wordfence and Pods. Wordfence is read-only; LiteSpeed cache invalidation requires a supported server.
 * New in Pro: FluentSMTP, Flamingo, Site Kit and Ultimate Member. Site Kit reads local setup, authentication and module state.
 * New write tools start disabled. Enable them explicitly on the Tools screen.
+* Fixed: Safe Updates reported "Could not verify database table ownership" on MariaDB sites whose database account has no role enabled.
+* Fixed: EMCP Cloud showed "Gateway unavailable" after updating to 3.21.0. A request without an MCP-Protocol-Version header now uses the version its session negotiated.
 * Improved: Native write verification, conflict-aware undo, partial-write recovery, nested sensitive-field filtering and mail-test receipts that prevent accidental replay.
 
 = 3.21.0 =
@@ -907,7 +909,7 @@ The first major release of the rebranded EMCP Tools, a step beyond Elementor int
 
 = 2.0.0 =
 * ⚠️ PRO USERS, ACTION NEEDED: Because the plugin folder/slug changed (elementor-mcp -> emcp-tools), the new install is a separate plugin to WordPress, so your Pro license does NOT carry over automatically. After deleting the old plugin and activating "EMCP Tools", you will likely need to re-activate your license and complete the Freemius opt-in/connection again. Your license stays valid. This only re-links it to the renamed plugin. Free users have nothing extra to do.
-* Changed: The plugin was renamed from "emcp-tools" to "emcp-tools" as it grows beyond Elementor. The folder, main file, text domain, and all internal PHP identifiers were rebranded. In the Plugins list it now shows as "EMCP Tools" (the old one stays "MCP Tools for Elementor", so it's clear which to remove). Your AI clients keep working unchanged: the MCP tool names and server (emcp-tools/..., emcp-tools-server) are intentionally unchanged, so no connection config or skill needs editing.
+* Changed: The plugin was renamed from "emcp-tools" to "emcp-tools" as it grows beyond Elementor. The folder, main file, text domain, and all internal PHP identifiers were rebranded. In the Plugins list it now shows as "EMCP Tools" (the old one keeps its previous name, so it's clear which to remove). Your AI clients keep working unchanged: the MCP tool names and server (emcp-tools/..., emcp-tools-server) are intentionally unchanged, so no connection config or skill needs editing.
 * New: Safe automatic migration. If the old "emcp-tools" plugin is still active, EMCP Tools pauses and shows a notice to deactivate and delete it; your settings and banner dismissals are carried over to the new keys (captured before the old plugin's uninstall can wipe them).
 * Note: Install emcp-tools as a new plugin, then remove the old elementor-mcp one when prompted. All PHP symbols are uniquely re-prefixed so the two coexist during the switch without fatal errors.
 
@@ -1026,7 +1028,7 @@ The first major release of the rebranded EMCP Tools, a step beyond Elementor int
 * Improved: Element factory with enhanced container support.
 
 = 1.3.2 =
-* Renamed plugin to "MCP Tools for Elementor" to comply with WordPress.org trademark guidelines.
+* Renamed the plugin to comply with WordPress.org trademark guidelines.
 * Updated admin menu label to "EMCP Tools" for brevity.
 * Fixed WPCS issues: prefixed all global variables in view templates, escaped integer output, added missing translators comments.
 * Updated "Tested up to" to WordPress 6.9.
