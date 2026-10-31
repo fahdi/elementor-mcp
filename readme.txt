@@ -229,6 +229,7 @@ Ten native plugin integrations, six of them free, plus fixes for the EMCP Cloud 
 * Improved: Native write verification, conflict-aware undo, partial-write recovery, nested sensitive-field filtering and mail-test receipts that prevent accidental replay.
 * Fixed: EMCP Cloud showed "Gateway unavailable" after updating to 3.21.0. A request without an MCP-Protocol-Version header now uses the version its session negotiated.
 * Fixed: Safe Updates reported "Could not verify database table ownership" on MariaDB sites whose database account has no role enabled.
+* Fixed: With WP_DEBUG on and Elementor inactive, every MCP request logged a "list-pages not found" notice.
 * Changed: The product name is now "MCP Tools for WordPress & Page Builders". Tool names and the server address are unchanged.
 
 = 3.21.0 =

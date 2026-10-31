@@ -244,9 +244,15 @@ class EMCP_Tools_Plugin {
 	 * @return string[]
 	 */
 	public function get_active_ability_names(): array {
-		if ( empty( $this->ability_names ) && function_exists( 'wp_get_ability' ) ) {
-			// Any known ability triggers wp_abilities_api_init → register_abilities().
-			wp_get_ability( 'emcp-tools/list-pages' );
+		if ( empty( $this->ability_names ) ) {
+			// Any registry lookup triggers wp_abilities_api_init → register_abilities().
+			// wp_has_ability() is a silent check: list-pages is Elementor-only, and
+			// wp_get_ability() raises a "not found" notice without Elementor.
+			if ( function_exists( 'wp_has_ability' ) ) {
+				wp_has_ability( 'emcp-tools/list-pages' );
+			} elseif ( function_exists( 'wp_get_ability' ) ) {
+				wp_get_ability( 'emcp-tools/list-pages' );
+			}
 		}
 		return is_array( $this->ability_names ) ? $this->ability_names : array();
 	}
